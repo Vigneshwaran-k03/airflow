@@ -1,0 +1,18 @@
+# Secrets
+.env
+
+# Airflow runtime
+logs/
+tmp/
+.history/
+
+# Python
+__pycache__/
+*.pyc
+
+# Test / local
+test/
+
+# OS
+Thumbs.db
+.DS_Store

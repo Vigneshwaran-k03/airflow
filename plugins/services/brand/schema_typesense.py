@@ -1,0 +1,26 @@
+def typesense_schema(collection_name: str):
+    return {
+        "name": collection_name,
+        "fields": [
+            {"name": "id", "type": "string"},
+            {"name": "name", "type": "string", "optional": True},
+            {"name": "alias", "type": "string", "optional": True},
+            {"name": "link", "type": "string", "optional": True},
+            {"name": "label", "type": "string", "optional": True},
+            {"name": "aliases", "type": "string[]", "optional": True},
+            {"name": "environment", "type": "string[]", "optional": True},
+            {"name": "title", "type": "object", "optional": True},
+            {"name": "description", "type": "object", "optional": True},
+            {"name": "long_description", "type": "object", "optional": True},
+            {"name": "meta", "type": "object", "optional": True},
+            {"name": "description_b2b", "type": "object", "optional": True},
+            {"name": "image", "type": "object", "optional": True},
+            {"name": "background_image", "type": "object", "optional": True},
+            {"name": "is_main", "type": "int32", "optional": True},
+            {"name": "is_seller_brand", "type": "int32", "optional": True},
+            {"name": "is_show_part_brand_search", "type": "int32", "optional": True},
+            {"name": "is_visible", "type": "int32", "optional": True},
+            {"name": "has_parts", "type": "int32", "optional": True},
+        ],
+        "enable_nested_fields": True,
+    }

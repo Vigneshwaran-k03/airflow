@@ -1,0 +1,10 @@
+apache-airflow-providers-slack
+apache-airflow-providers-apache-spark
+opensearch-py
+pyspark
+pandas>=2.2.0
+sqlalchemy
+typesense ==1.1.1
+pymysql
+polars
+connectorx
