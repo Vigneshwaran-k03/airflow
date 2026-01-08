@@ -13,7 +13,7 @@ def push_categories_to_typesense(
 ):
     """
     Stream category Parquet files into Typesense safely.
-    Flat data only. No models. No nested JSON.
+
     """
 
     client = get_typesense_client("typesense_conn")
@@ -31,7 +31,7 @@ def push_categories_to_typesense(
     # Lazy scan (does NOT load all data into memory)
     lf = pl.scan_parquet(f"{parquet_file}/*.parquet")
 
-    # Apply flat transformations (NO nested JSON)
+    # Apply flat transformations
     lf = transform_category_data(lf)
 
     # Stream in batches

@@ -4,7 +4,7 @@ import polars as pl
 from helpers.db_helpers import select_to_polars
 from helpers.clear_dir import clear_dir
 from services.category.query import categories_base_query
-
+from helpers.debug_df import debug_df
 
 def fetch_categories_chunked(
     output_dir: str,
@@ -26,13 +26,14 @@ def fetch_categories_chunked(
     total_rows = 0
 
     while True:
-        # Build chunked category query (FLAT)
+        # Build chunked category query
         stmt = categories_base_query(
             limit=chunk_size,
             offset=offset,
         )
 
         df = select_to_polars(stmt)
+
 
         if df.is_empty():
             break

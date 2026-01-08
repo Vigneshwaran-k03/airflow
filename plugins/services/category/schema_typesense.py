@@ -2,11 +2,22 @@ def typesense_schema(collection_name: str):
 
     return {
         "name": collection_name,
+       
         "fields": [
             # Identifiers
-            {"name": "id", "type": "int32"},
+            {"name": "id", "type": "string"},
             {"name": "parent_id", "type": "int32", "optional": True},
-            {"name": "root_parent_id", "type": "int32", "optional": True},
+
+            #parents
+            {"name": "parent", "type": "object"},
+            {"name": "parent_ids", "type": "int32[]"},
+
+            #environment
+            {"name": "environment", "type": "string"},
+            {"name": "id_environment", "type": "int32"},
+            
+            #linktype
+            {"name": "link_type", "type": "string"},
 
             # Ordering
             {"name": "order", "type": "int32"},
@@ -22,18 +33,23 @@ def typesense_schema(collection_name: str):
             {"name": "has_generated_children", "type": "bool"},
 
             # Misc fields
-            {"name": "alias", "type": "string", "optional": True},
-            {"name": "score", "type": "int32", "optional": True},
-            {"name": "event", "type": "string", "optional": True},
+            {"name": "alias", "type": "string"},
+            {"name": "score", "type": "int32"},
+            {"name": "event", "type": "string"},
 
             # Translations (flattened later in transform step)
-            {"name": "name", "type": "string"},
-            {"name": "label", "type": "string"},
-            {"name": "title", "type": "string"},
-            {"name": "description", "type": "string"},
-            {"name": "long_description", "type": "string"},
-            {"name": "meta_title", "type": "string"},
-            {"name": "meta_description", "type": "string"},
+            {"name": "name", "type": "object"},
+            {"name": "label", "type": "object"},
+            {"name": "title", "type": "object"},
+            {"name": "description", "type": "object"},
+            {"name": "long_description", "type": "object"},
+            {"name": "meta_title", "type": "object"},
+            {"name": "meta_description", "type": "object"},
+
+            #images 
+            {"name": "icon", "type": "object"},
+            {"name": "picture", "type": "object"},
+
         ],
-        "default_sorting_field": "order",
+        "enable_nested_fields": True,
     }

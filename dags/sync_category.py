@@ -22,7 +22,7 @@ with DAG(
     tags=["categories", "mysql", "parquet", "typesense"],
 ) as dag:
 
-    # 1️⃣ MySQL → Parquet (FLAT CATEGORY DATA)
+    # 1️⃣ MySQL → Parquet
     fetch_categories_task = PythonOperator(
         task_id="fetch_categories_to_parquet",
         python_callable=fetch_categories_chunked,

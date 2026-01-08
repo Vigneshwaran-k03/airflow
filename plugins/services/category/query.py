@@ -10,7 +10,7 @@ from sqlalchemy.orm import aliased
 
 from models.translation import Translate
 
-# ✅ DEFINE TABLE
+#DEFINE TABLE
 catman_swap = table(
     "catman_swap",
     column("id"),
@@ -34,16 +34,20 @@ catman_swap = table(
     column("alias"),
     column("score"),
     column("event"),
-)
+    column("img_picto"),
+    column("img"),
+    column("environment"),
+    column("id_environment"),
+    column("link_type"),
 
+)
+catman_parent_ids = table(
+    "catman_parent_ids",
+    column("child_id"),
+    column("parent_ids"),
+)
 def categories_base_query(limit: int = None, offset: int = None):
-    """
-    Flat Category SELECT for indexing.
-    - No models
-    - No icons / pictures
-    - No nested parents
-    - Polars-safe
-    """
+
 
     Parent = aliased(catman_swap)
     RootParent = aliased(catman_swap)
@@ -61,7 +65,7 @@ def categories_base_query(limit: int = None, offset: int = None):
             # IDs
             catman_swap.c.id.label("id"),
             catman_swap.c.id_parent.label("parent_id"),
-            Parent.c.id_parent.label("root_parent_id"),
+            catman_parent_ids.c.parent_ids.label("parent_ids"),
 
             # Order
             catman_swap.c.ordre.label("order"),
@@ -76,10 +80,27 @@ def categories_base_query(limit: int = None, offset: int = None):
             catman_swap.c.is_visible_menu,
             catman_swap.c.has_generated_children,
 
+            #environment
+            catman_swap.c.environment,
+            catman_swap.c.id_environment,
+            
+            #linktype
+            catman_swap.c.link_type,
+
             # Other fields
             catman_swap.c.alias,
             catman_swap.c.score,
             catman_swap.c.event,
+
+            #images
+            catman_swap.c.img_picto.label("icon"),
+            catman_swap.c.img.label("picture"),
+
+            #parents
+            Parent.c.img.label("parent_picture"),
+            cast(func.json_object(*Translate.json_args(table=TrName)), String).label("parent_name"),
+            cast(func.json_object(*Translate.json_args(table=TrLabel)), String).label("parent_label"),
+
 
             # Translations (JSON as STRING – flattened later)
             cast(func.json_object(*Translate.json_args(table=TrName)), String).label("name"),
@@ -100,6 +121,7 @@ def categories_base_query(limit: int = None, offset: int = None):
         .outerjoin(TrDescLong, TrDescLong.id == catman_swap.c.tr_desc_long)
         .outerjoin(TrMetaTitle, TrMetaTitle.id == catman_swap.c.tr_metatitle)
         .outerjoin(TrMetaDesc, TrMetaDesc.id == catman_swap.c.tr_metadesc)
+        .outerjoin(catman_parent_ids,catman_parent_ids.c.child_id == catman_swap.c.id)
         .limit(limit)
         .offset(offset)
     )
