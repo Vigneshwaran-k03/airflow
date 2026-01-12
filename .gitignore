@@ -1,6 +1,7 @@
 # Secrets
 .env
 catman_parent_id.txt
+tech_parent_ids.txt
 # Airflow runtime
 logs/
 tmp/

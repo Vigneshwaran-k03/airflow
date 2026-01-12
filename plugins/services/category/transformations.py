@@ -51,6 +51,7 @@ def _parse_parent_ids(value):
     
     return []
 
+
 def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     # Base Transformations
     lf = lf.with_columns(
@@ -96,6 +97,10 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             # parent_ids - parse into list of integers
             pl.col("parent_ids").map_elements(_parse_parent_ids, return_dtype=pl.List(pl.Int32)),
             
+            # Branches - parse into list of integers
+            pl.col("technical_branches").map_elements(_parse_parent_ids, return_dtype=pl.List(pl.Int32)),
+            pl.col("universal_branches").map_elements(_parse_parent_ids, return_dtype=pl.List(pl.Int32)),
+            
             # images
             pl.col("icon")
             .map_elements(
@@ -107,9 +112,7 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
                 lambda x: file_to_image_obj(x, PICTURE_FOLDER) or {}, return_dtype=pl.Object
             )
             .alias("picture"),
-
            
-
 
         ]
     )
@@ -164,7 +167,8 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "has_pieces_displayed", "parent_id", "order",
         "alias", "score", "event", "environment", "id_environment", "link_type",
         "icon", "picture", 
-        "parent","parent_ids"
+        "parent","parent_ids",
+        "technical_branches", "universal_branches"
     ]
     
     lf = lf.select(final_cols)

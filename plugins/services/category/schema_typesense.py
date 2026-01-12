@@ -12,6 +12,10 @@ def typesense_schema(collection_name: str):
             {"name": "parent", "type": "object"},
             {"name": "parent_ids", "type": "int32[]"},
 
+            # Branches
+            {"name": "technical_branches", "type": "int32[]"},
+            {"name": "universal_branches", "type": "int32[]"},
+
             #environment
             {"name": "environment", "type": "string"},
             {"name": "id_environment", "type": "int32"},
@@ -51,6 +55,7 @@ def typesense_schema(collection_name: str):
             #images 
             {"name": "icon", "type": "object"},
             {"name": "picture", "type": "object"},
+
 
         ],
         "enable_nested_fields": True,
