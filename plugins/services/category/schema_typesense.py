@@ -7,7 +7,7 @@ def typesense_schema(collection_name: str):
             # Identifiers
             {"name": "id", "type": "string"},
             {"name": "parent_id", "type": "int32", "optional": True},
-
+            
             #parents
             {"name": "parent", "type": "object"},
             {"name": "parent_ids", "type": "int32[]"},
@@ -39,6 +39,8 @@ def typesense_schema(collection_name: str):
 
             # Translations (flattened later in transform step)
             {"name": "name", "type": "object"},
+            {"name": "generated_title", "type": "object", "optional": True},
+            {"name": "search_title", "type": "object"},
             {"name": "label", "type": "object"},
             {"name": "title", "type": "object"},
             {"name": "description", "type": "object"},
