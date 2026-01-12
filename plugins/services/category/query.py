@@ -39,7 +39,7 @@ catman_swap = table(
     column("environment"),
     column("id_environment"),
     column("link_type"),
-
+    column("generated_title"),
 )
 catman_parent_ids = table(
     "catman_parent_ids",
@@ -51,7 +51,7 @@ def categories_base_query(limit: int = None, offset: int = None):
 
     Parent = aliased(catman_swap)
     RootParent = aliased(catman_swap)
-
+    TrGeneratedTitle = aliased(Translate)
     TrName = aliased(Translate)
     TrLabel = aliased(Translate)
     TrTitle = aliased(Translate)
@@ -110,6 +110,10 @@ def categories_base_query(limit: int = None, offset: int = None):
             cast(func.json_object(*Translate.json_args(table=TrDescLong)), String).label("long_description"),
             cast(func.json_object(*Translate.json_args(table=TrMetaTitle)), String).label("meta_title"),
             cast(func.json_object(*Translate.json_args(table=TrMetaDesc)), String).label("meta_description"),
+            cast(func.json_object(*Translate.json_args(table=TrGeneratedTitle)),String).label("generated_title"),
+
+    
+
         )
         .select_from(catman_swap)
         .outerjoin(Parent, Parent.c.id == catman_swap.c.id_parent)
@@ -122,6 +126,8 @@ def categories_base_query(limit: int = None, offset: int = None):
         .outerjoin(TrMetaTitle, TrMetaTitle.id == catman_swap.c.tr_metatitle)
         .outerjoin(TrMetaDesc, TrMetaDesc.id == catman_swap.c.tr_metadesc)
         .outerjoin(catman_parent_ids,catman_parent_ids.c.child_id == catman_swap.c.id)
+        .outerjoin(TrGeneratedTitle, TrGeneratedTitle.id == catman_swap.c.generated_title ) 
+         
         .limit(limit)
         .offset(offset)
     )

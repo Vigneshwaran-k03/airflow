@@ -51,7 +51,6 @@ def _parse_parent_ids(value):
     
     return []
 
-
 def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     # Base Transformations
     lf = lf.with_columns(
@@ -65,6 +64,8 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("long_description").map_elements(_parse_json, return_dtype=pl.Object),
             pl.col("meta_title").map_elements(_parse_json, return_dtype=pl.Object),
             pl.col("meta_description").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("generated_title").map_elements(_parse_json, return_dtype=pl.Object),
+
 
             # Booleans
             pl.col("is_visible").cast(pl.Boolean),
@@ -106,6 +107,10 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
                 lambda x: file_to_image_obj(x, PICTURE_FOLDER) or {}, return_dtype=pl.Object
             )
             .alias("picture"),
+
+           
+
+
         ]
     )
 
@@ -126,11 +131,34 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         pl.col("id").cast(pl.Utf8),
     ]
 )
+    lf = lf.with_columns(
+    [
+        pl.when(
+            pl.col("generated_title").is_not_null()
+            & pl.col("generated_title").map_elements(
+                lambda d: (
+                    isinstance(d, dict)
+                    and any(
+                        isinstance(v, str) and v.strip() != ""
+                        for v in d.values()
+                    )
+                ),
+                return_dtype=pl.Boolean,
+            )
+        )
+        .then(pl.col("generated_title"))
+        .otherwise(pl.col("name"))
+        .alias("search_title")
+    ]
+)
+
+
+
 
     # select only the desired columns
     final_cols = [
         "id", "name","label", "title", "description", "long_description",
-        "meta_title", "meta_description",
+        "meta_title", "meta_description","search_title", "generated_title",
         "is_visible", "is_enabled", "is_clickable", "is_reconditioned", 
         "is_excluded_from_naming", "is_visible_menu", "has_generated_children",
         "has_pieces_displayed", "parent_id", "order",
