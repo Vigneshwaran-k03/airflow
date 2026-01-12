@@ -6,6 +6,7 @@ def technical_schema(collection_name: str):
             {"name": "parent_id", "type": "int32", "optional": True},
             {"name": "parent", "type": "object", "optional": True},
             {"name": "parent_ids", "type": "int32[]", "optional": True},
+            {"name": "environments", "type": "string[]", "optional": True},
 
             {"name": "name", "type": "object"},
             {"name": "label", "type": "object"},

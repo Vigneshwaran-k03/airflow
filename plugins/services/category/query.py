@@ -46,8 +46,36 @@ catman_parent_ids = table(
     column("child_id"),
     column("parent_ids"),
 )
-def categories_base_query(limit: int = None, offset: int = None):
 
+# Define l_catman_swap table for branches
+l_catman_swap = table(
+    "l_catman_swap",
+    column("id_catman"),
+    column("id_cible"),
+    column("table_cible"),
+)
+
+def categories_base_query(limit: int = None, offset: int = None):
+    # Create subqueries for technical and universal branches
+    technical_branches_sq = (
+        select(
+            l_catman_swap.c.id_catman.label("catman_id"),
+            func.json_arrayagg(l_catman_swap.c.id_cible).label("technical_branches"),
+        )
+        .where(l_catman_swap.c.table_cible == "arbre_kit_technique")
+        .group_by(l_catman_swap.c.id_catman)
+        .subquery()
+    )
+    
+    universal_branches_sq = (
+        select(
+            l_catman_swap.c.id_catman.label("catman_id"),
+            func.json_arrayagg(l_catman_swap.c.id_cible).label("universal_branches"),
+        )
+        .where(l_catman_swap.c.table_cible == "arborescence")
+        .group_by(l_catman_swap.c.id_catman)
+        .subquery()
+    )
 
     Parent = aliased(catman_swap)
     RootParent = aliased(catman_swap)
@@ -101,6 +129,9 @@ def categories_base_query(limit: int = None, offset: int = None):
             cast(func.json_object(*Translate.json_args(table=TrName)), String).label("parent_name"),
             cast(func.json_object(*Translate.json_args(table=TrLabel)), String).label("parent_label"),
 
+            # Branches
+            technical_branches_sq.c.technical_branches,
+            universal_branches_sq.c.universal_branches,
 
             # Translations (JSON as STRING – flattened later)
             cast(func.json_object(*Translate.json_args(table=TrName)), String).label("name"),
@@ -126,8 +157,9 @@ def categories_base_query(limit: int = None, offset: int = None):
         .outerjoin(TrMetaTitle, TrMetaTitle.id == catman_swap.c.tr_metatitle)
         .outerjoin(TrMetaDesc, TrMetaDesc.id == catman_swap.c.tr_metadesc)
         .outerjoin(catman_parent_ids,catman_parent_ids.c.child_id == catman_swap.c.id)
-        .outerjoin(TrGeneratedTitle, TrGeneratedTitle.id == catman_swap.c.generated_title ) 
-         
+        .outerjoin(TrGeneratedTitle, TrGeneratedTitle.id == catman_swap.c.generated_title)
+        .outerjoin(technical_branches_sq, technical_branches_sq.c.catman_id == catman_swap.c.id)
+        .outerjoin(universal_branches_sq, universal_branches_sq.c.catman_id == catman_swap.c.id)
         .limit(limit)
         .offset(offset)
     )

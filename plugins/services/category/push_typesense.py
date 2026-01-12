@@ -34,6 +34,8 @@ def push_categories_to_typesense(
     # Apply flat transformations
     lf = transform_category_data(lf)
 
+    print(f"[Typesense] Starting import to '{collection_name}'...")
+    
     # Stream in batches
     for batch_df in lf.collect(streaming=True).iter_slices(batch_size):
         records = batch_df.to_dicts()
