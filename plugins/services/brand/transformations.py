@@ -1,7 +1,7 @@
 
 import polars as pl
 from helpers.jsonString_json import json_decode
-from helpers.file_helper import file_to_image_obj
+from helpers.file_to_img_obj import file_to_image_obj
 from helpers.convert_lable import get_label
 def transform_data(df: pl.DataFrame):
     

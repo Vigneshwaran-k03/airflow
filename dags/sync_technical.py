@@ -38,7 +38,7 @@ with DAG(
         python_callable=push_technical_to_typesense,
         op_kwargs={
             "parquet_file": "/opt/airflow/tmp/technical_chunked",
-            "collection_name": "technical",
+            "collection_name": "technical_branches",
             "batch_size": 5_000,
         },
     )
