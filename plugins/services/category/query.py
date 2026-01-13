@@ -22,6 +22,7 @@ catman_swap = table(
     column("tr_desc_long"),
     column("tr_metadesc"),
     column("tr_metatitle"),
+    column("tr_text"),
     column("ordre"),
     column("is_visible"),
     column("is_enable"),
@@ -40,6 +41,10 @@ catman_swap = table(
     column("id_environment"),
     column("link_type"),
     column("generated_title"),
+    column("primary_color"),
+    column("display_brand_filter"),
+    column("shop_filters"),
+    column("tr_redirection"),
 )
 catman_parent_ids = table(
     "catman_parent_ids",
@@ -87,6 +92,8 @@ def categories_base_query(limit: int = None, offset: int = None):
     TrDescLong = aliased(Translate)
     TrMetaDesc = aliased(Translate)
     TrMetaTitle = aliased(Translate)
+    TrContent = aliased(Translate)
+    TrRedirectionUrl = aliased(Translate)
 
     return (
         select(
@@ -98,6 +105,9 @@ def categories_base_query(limit: int = None, offset: int = None):
             # Order
             catman_swap.c.ordre.label("order"),
 
+            #colour
+            catman_swap.c.primary_color,
+
             # Flags
             catman_swap.c.is_visible,
             catman_swap.c.is_enable.label("is_enabled"),
@@ -107,6 +117,8 @@ def categories_base_query(limit: int = None, offset: int = None):
             catman_swap.c.is_excluded_from_naming,
             catman_swap.c.is_visible_menu,
             catman_swap.c.has_generated_children,
+            catman_swap.c.display_brand_filter,
+            catman_swap.c.shop_filters,
 
             #environment
             catman_swap.c.environment,
@@ -142,6 +154,8 @@ def categories_base_query(limit: int = None, offset: int = None):
             cast(func.json_object(*Translate.json_args(table=TrMetaTitle)), String).label("meta_title"),
             cast(func.json_object(*Translate.json_args(table=TrMetaDesc)), String).label("meta_description"),
             cast(func.json_object(*Translate.json_args(table=TrGeneratedTitle)),String).label("generated_title"),
+            cast(func.json_object(*Translate.json_args(table=TrContent)), String).label("content"),
+            cast(func.json_object(*Translate.json_args(table=TrRedirectionUrl)), String).label("redirection_url"),
 
     
 
@@ -158,6 +172,8 @@ def categories_base_query(limit: int = None, offset: int = None):
         .outerjoin(TrMetaDesc, TrMetaDesc.id == catman_swap.c.tr_metadesc)
         .outerjoin(catman_parent_ids,catman_parent_ids.c.child_id == catman_swap.c.id)
         .outerjoin(TrGeneratedTitle, TrGeneratedTitle.id == catman_swap.c.generated_title)
+        .outerjoin(TrContent, TrContent.id == catman_swap.c.tr_text)
+        .outerjoin(TrRedirectionUrl, TrRedirectionUrl.id == catman_swap.c.tr_redirection)
         .outerjoin(technical_branches_sq, technical_branches_sq.c.catman_id == catman_swap.c.id)
         .outerjoin(universal_branches_sq, universal_branches_sq.c.catman_id == catman_swap.c.id)
         .limit(limit)

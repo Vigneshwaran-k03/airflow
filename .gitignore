@@ -1,7 +1,8 @@
 # Secrets
 .env
-catman_parent_id.txt
-tech_parent_ids.txt
+catman_parent_id.sql
+tech_parent_ids.sql
+arborescence_parent_ids.sql
 # Airflow runtime
 logs/
 tmp/

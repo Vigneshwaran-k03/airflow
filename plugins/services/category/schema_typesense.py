@@ -16,6 +16,9 @@ def typesense_schema(collection_name: str):
             {"name": "technical_branches", "type": "int32[]"},
             {"name": "universal_branches", "type": "int32[]"},
 
+            #colour
+            {"name": "primary_color", "type": "string"},
+      
             #environment
             {"name": "environment", "type": "string"},
             {"name": "id_environment", "type": "int32"},
@@ -35,6 +38,8 @@ def typesense_schema(collection_name: str):
             {"name": "is_excluded_from_naming", "type": "bool"},
             {"name": "is_visible_menu", "type": "bool"},
             {"name": "has_generated_children", "type": "bool"},
+            {"name": "display_brand_filter", "type": "bool"},
+            {"name": "shop_filters", "type": "string[]"},
 
             # Misc fields
             {"name": "alias", "type": "string"},
@@ -51,6 +56,8 @@ def typesense_schema(collection_name: str):
             {"name": "long_description", "type": "object"},
             {"name": "meta_title", "type": "object"},
             {"name": "meta_description", "type": "object"},
+            {"name": "content", "type": "object"},
+            {"name": "redirection_url", "type": "object"},
 
             #images 
             {"name": "icon", "type": "object"},

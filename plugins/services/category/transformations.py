@@ -1,5 +1,6 @@
 import polars as pl
-from helpers.file_helper import file_to_image_obj,get_current_parent
+from helpers.file_to_img_obj import file_to_image_obj
+from helpers.get_current_parent import get_current_parent
 from helpers.jsonString_json import json_decode
 import json
 
@@ -66,6 +67,11 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("meta_title").map_elements(_parse_json, return_dtype=pl.Object),
             pl.col("meta_description").map_elements(_parse_json, return_dtype=pl.Object),
             pl.col("generated_title").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("content").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("redirection_url").map_elements(_parse_json, return_dtype=pl.Object),
+
+            #colour
+            pl.col("primary_color").cast(pl.Utf8).fill_null(""),
 
 
             # Booleans
@@ -76,6 +82,7 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("is_excluded_from_naming").cast(pl.Boolean),
             pl.col("is_visible_menu").cast(pl.Boolean),
             pl.col("has_generated_children").cast(pl.Boolean),
+            pl.col("display_brand_filter").cast(pl.Boolean),
 
             # Integers
             pl.col("has_pieces_displayed").cast(pl.Int32),
@@ -100,6 +107,12 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             # Branches - parse into list of integers
             pl.col("technical_branches").map_elements(_parse_parent_ids, return_dtype=pl.List(pl.Int32)),
             pl.col("universal_branches").map_elements(_parse_parent_ids, return_dtype=pl.List(pl.Int32)),
+            
+            # shop_filters - parse into list of strings
+            pl.col("shop_filters").map_elements(
+                lambda x: json.loads(x) if x and isinstance(x, str) else (x if isinstance(x, list) else []),
+                return_dtype=pl.List(pl.Utf8)
+            ),
             
             # images
             pl.col("icon")
@@ -162,11 +175,13 @@ def transform_category_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     final_cols = [
         "id", "name","label", "title", "description", "long_description",
         "meta_title", "meta_description","search_title", "generated_title",
+        "content", "redirection_url",
         "is_visible", "is_enabled", "is_clickable", "is_reconditioned", 
         "is_excluded_from_naming", "is_visible_menu", "has_generated_children",
         "has_pieces_displayed", "parent_id", "order",
         "alias", "score", "event", "environment", "id_environment", "link_type",
         "icon", "picture", 
+        "primary_color","display_brand_filter","shop_filters",
         "parent","parent_ids",
         "technical_branches", "universal_branches"
     ]

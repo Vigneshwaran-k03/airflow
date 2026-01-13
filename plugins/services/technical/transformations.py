@@ -1,6 +1,7 @@
 import polars as pl
 import json
-from helpers.file_helper import file_to_image_obj, get_current_parent
+from helpers.file_to_img_obj import file_to_image_obj
+from helpers.get_current_parent import get_current_parent
 from helpers.jsonString_json import json_decode
 
 PICTURE_FOLDER = "images/arbre_kit_technique"
