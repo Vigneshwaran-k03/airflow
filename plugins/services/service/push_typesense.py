@@ -1,0 +1,58 @@
+import polars as pl
+from typesense.exceptions import ObjectNotFound
+from common.typesense_client import get_typesense_client
+from services.service.schema_typesense import typesense_schema
+from services.service.transformations import transform_data
+
+
+def push_services_to_typesense(
+    parquet_file: str,
+    collection_name: str = "service",
+    batch_size: int = 1_000,
+):
+    """
+    Stream a single Parquet file of services into Typesense safely.
+    """
+
+    client = get_typesense_client("typesense_conn")
+
+    # Ensure collection exists
+    schema = typesense_schema(collection_name)
+    try:
+        client.collections[collection_name].retrieve()
+    except ObjectNotFound:
+        client.collections.create(schema)
+        print(f"[Typesense] Created collection '{collection_name}'")
+
+    total_imported = 0
+    total_failed = 0
+
+    # Lazy scan (no data loaded yet)
+    lf = pl.scan_parquet(parquet_file)
+
+    # Apply transformations
+    lf = transform_data(lf)
+
+    # Stream in batches
+    for batch_df in lf.collect(streaming=True).iter_slices(batch_size):
+        records = batch_df.to_dicts()
+
+        results = client.collections[
+            collection_name
+        ].documents.import_(
+            records,
+            {"action": "upsert"},
+        )
+
+        failed = [r for r in results if not r.get("success")]
+        total_failed += len(failed)
+        total_imported += len(records) - len(failed)
+
+        # Print failures for debugging
+        for fail_record in failed:
+            print(f"[Typesense] Failed to import: {fail_record}")
+
+    print(
+        f"[Typesense] Imported {total_imported} documents "
+        f"(failed: {total_failed}) into '{collection_name}'"
+    )
