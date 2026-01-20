@@ -13,7 +13,7 @@ def pricing_schema(collection_name: str) -> dict:
             
             # Foreign keys and identifiers
             {"name": "company_id", "type": "int32"},
-            {"name": "vio_machine_id", "type": "int32[]"},
+            {"name": "vio_machine_id", "type": "int32"},
             {"name": "code", "type": "string"},
             
             # Pricing and thresholds
@@ -43,8 +43,8 @@ def pricing_schema(collection_name: str) -> dict:
             # Environment array
             {"name": "environment", "type": "string[]"},
 
-            # VIO Machine object (null - no table relationship)
-            {"name": "vio_machine", "type": "object", "optional": True},
+            # VIO Machine
+            {"name": "vio_machine", "type": "int32"},
 
             #dates
             {"name": "start_date", "type": "object"},
