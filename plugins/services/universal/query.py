@@ -1,35 +1,9 @@
 from sqlalchemy import select, table, column, func, cast, String
 from sqlalchemy.orm import aliased
 from models.translation import Translate
+from models.universals import Universal, UniversalParentIds
 
 
-
-
-# Tables
-arborescence = table(
-    "arborescence",
-    column("id"),
-    column("id_parent"),
-    column("tr_nom"),
-    column("tr_label"),
-    column("tr_sommaire"),
-    column("tr_alias"),
-    column("img"),
-    column("default_machine_img"),
-    column("background"),
-    column("icon"),
-    column("code_douane"),
-    column("poids_moyen"),
-    column("has_battery"),
-    column("depreciation_rate"),
-    column("is_visible_front"),
-)
-
-parent_ids_tbl = table(
-    "arborescence_parent_ids",
-    column("id"),
-    column("parent_ids"),
-)
 def universal_environment_query():
     f_produits_machine = table(
         "f_produits_machine",
@@ -93,33 +67,34 @@ def universal_base_query(limit=None, offset=None):
 
     return (
         select(
-            arborescence.c.id,
-            arborescence.c.id_parent.label("parent_id"),
-            parent_ids_tbl.c.parent_ids,
+            Universal.id,
+            Universal.id_parent.label("parent_id"),
+            UniversalParentIds.parent_ids,
 
-            cast(func.json_object(*Translate.json_args(TrName)), String).label("name"),
-            cast(func.json_object(*Translate.json_args(TrLabel)), String).label("label"),
-            cast(func.json_object(*Translate.json_args(TrSummary)), String).label("summary"),
-            cast(func.json_object(*Translate.json_args(TrAlias)), String).label("alias"),
+            cast(func.json_object(*Translate.json_args(table=TrName)), String).label("name"),
+            cast(func.json_object(*Translate.json_args(table=TrLabel)), String).label("label"),
+            cast(func.json_object(*Translate.json_args(table=TrSummary)), String).label("summary"),
+            cast(func.json_object(*Translate.json_args(table=TrAlias)), String).label("alias"),
 
-            arborescence.c.img,
-            arborescence.c.default_machine_img,
-            arborescence.c.background,
-            arborescence.c.icon,
-            arborescence.c.code_douane.label("customs_code"),
-            arborescence.c.poids_moyen.label("average_weight"),
-            arborescence.c.has_battery,
-            arborescence.c.depreciation_rate,
-            arborescence.c.is_visible_front,
+            Universal.img,
+            Universal.default_machine_img,
+            Universal.background,
+            Universal.icon,
+            Universal.code_douane.label("customs_code"),
+            Universal.poids_moyen.label("average_weight"),
+            Universal.has_battery,
+            Universal.depreciation_rate,
+            Universal.is_visible_front,
 
             env_subq.c.environment,
         )
-        .outerjoin(TrName, TrName.id == arborescence.c.tr_nom)
-        .outerjoin(TrLabel, TrLabel.id == arborescence.c.tr_label)
-        .outerjoin(TrSummary, TrSummary.id == arborescence.c.tr_sommaire)
-        .outerjoin(TrAlias, TrAlias.id == arborescence.c.tr_alias)
-        .outerjoin(parent_ids_tbl, parent_ids_tbl.c.id == arborescence.c.id)
-        .outerjoin(env_subq, env_subq.c.id == arborescence.c.id)
+        .select_from(Universal)
+        .outerjoin(TrName, TrName.id == Universal.tr_nom)
+        .outerjoin(TrLabel, TrLabel.id == Universal.tr_label)
+        .outerjoin(TrSummary, TrSummary.id == Universal.tr_sommaire)
+        .outerjoin(TrAlias, TrAlias.id == Universal.tr_alias)
+        .outerjoin(UniversalParentIds, UniversalParentIds.id == Universal.id)
+        .outerjoin(env_subq, env_subq.c.id == Universal.id)
         .limit(limit)
         .offset(offset)
     )
