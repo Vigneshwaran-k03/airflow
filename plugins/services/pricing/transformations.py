@@ -27,9 +27,6 @@ def transform_pricing_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     return lf.with_columns([
         # Convert id to string (Typesense requirement)
         pl.col("id").cast(pl.Utf8),
-
-        # VIO Machine (empty object - no table relationship)
-        pl.lit(None).alias("vio_machine"),
         
         # Parse JSON translations
         pl.col("name").map_elements(
@@ -74,6 +71,7 @@ def transform_pricing_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         
         # Ensure numeric fields
         pl.col("company_id").cast(pl.Int32),
-        pl.col("vio_machine_id").cast(pl.List(pl.Int32)),
+        pl.col("vio_machine_id").cast(pl.Int32),
+        pl.col("vio_machine").cast(pl.Int32),
         pl.col("products_threshold").cast(pl.Int32),
     ])

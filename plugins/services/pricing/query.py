@@ -82,6 +82,7 @@ def pricing_base_query(limit=None, offset=None):
             tarifs.c.id.label("id"),
             tarifs.c.id_societe.label("company_id"),
             tarifs.c.id_vio_machine.label("vio_machine_id"),
+            tarifs.c.id_vio_machine.label("vio_machine"),
             tarifs.c.code.label("code"),
             tarifs.c.reduc.label("reduction"),
             
@@ -103,10 +104,6 @@ def pricing_base_query(limit=None, offset=None):
             # Dates (DATE only, no timezone)
             cast(tarifs.c.debut, String).label("start_date"),
             cast(tarifs.c.fin, String).label("end_date"),
-
-
-            # VIO Machine (empty object - no table relationship)
-            cast(literal(None), String).label("vio_machine"),
             
             # Environment array
             env_subq.c.environment.label("environment"),
