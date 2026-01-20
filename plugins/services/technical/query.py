@@ -1,29 +1,8 @@
-from sqlalchemy import select, table, column, cast, func, String 
+from sqlalchemy import select, table, column, cast, func, String
 from sqlalchemy.orm import aliased
 from models.translation import Translate
+from models.technicals import Technical, TechnicalParentIds
 from sqlalchemy.sql import distinct
-
-arbre_kit_technique = table(
-    "arbre_kit_technique",
-    column("id"),
-    column("id_parent"),
-    column("nom"),
-    column("label"),
-    column("poids"),
-    column("is_consommable"),
-    column("is_accessory"),
-    column("is_other"),
-    column("conditionnement"),
-    column("is_visible"),
-    column("img"),
-    column("hs_code"),
-    column("score"),
-)
-tech_parent_ids = table(
-    "tech_parent_ids",
-    column("id"),
-    column("parent_ids"),
-)
 
 def technical_base_query(limit=None, offset=None):
     TrName = aliased(Translate)
@@ -33,31 +12,32 @@ def technical_base_query(limit=None, offset=None):
     return (
         select(
             #ids
-            arbre_kit_technique.c.id.label("id"),
-            arbre_kit_technique.c.id_parent.label("parent_id"),
-            tech_parent_ids.c.parent_ids.label("parent_ids"),
+            Technical.id.label("id"),
+            Technical.id_parent.label("parent_id"),
+            TechnicalParentIds.parent_ids.label("parent_ids"),
 
             #environment
             env_subq.c.environments.label("environments"),
 
-            arbre_kit_technique.c.poids.label("weight"),
-            arbre_kit_technique.c.is_consommable.label("is_consumable"),
-            arbre_kit_technique.c.is_accessory,
-            arbre_kit_technique.c.is_other,
-            arbre_kit_technique.c.conditionnement.label("packaging"),
-            arbre_kit_technique.c.is_visible,
-            arbre_kit_technique.c.hs_code,
-            arbre_kit_technique.c.score,
-            arbre_kit_technique.c.img.label("picture"),
+            Technical.poids.label("weight"),
+            Technical.is_consommable.label("is_consumable"),
+            Technical.is_accessory,
+            Technical.is_other,
+            Technical.conditionnement.label("packaging"),
+            Technical.is_visible,
+            Technical.hs_code,
+            Technical.score,
+            Technical.img.label("picture"),
 
             # translations (JSON as STRING – flattened later)
             cast(func.json_object(*Translate.json_args(table=TrName)), String).label("name"),
             cast(func.json_object(*Translate.json_args(table=TrLabel)), String).label("label"),
         )
-        .outerjoin(TrName, TrName.id == arbre_kit_technique.c.nom)
-        .outerjoin(TrLabel, TrLabel.id == arbre_kit_technique.c.label)
-        .outerjoin(tech_parent_ids,tech_parent_ids.c.id == arbre_kit_technique.c.id)
-        .outerjoin(env_subq, env_subq.c.id == arbre_kit_technique.c.id)
+        .select_from(Technical)
+        .outerjoin(TrName, TrName.id == Technical.nom)
+        .outerjoin(TrLabel, TrLabel.id == Technical.label)
+        .outerjoin(TechnicalParentIds, TechnicalParentIds.id == Technical.id)
+        .outerjoin(env_subq, env_subq.c.id == Technical.id)
         .limit(limit)
         .offset(offset)
     )

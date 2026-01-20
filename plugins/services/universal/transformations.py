@@ -10,12 +10,17 @@ DEFAULT_MACHINE_FOLDER = "documents/arborescence/img"
 def _parse_parent_ids(value):
     if not value:
         return []
+    
+    ids = []
     if isinstance(value, list):
-        return [int(x) for x in value if x is not None]
-    try:
-        return [int(x) for x in json.loads(value)]
-    except Exception:
-        return []
+        ids = [int(x) for x in value if x is not None]
+    else:
+        try:
+            ids = [int(x) for x in json.loads(value)]
+        except Exception:
+            return []
+
+    return list(dict.fromkeys(ids))
 
 def transform_universal_data(lf: pl.LazyFrame) -> pl.LazyFrame:
 
