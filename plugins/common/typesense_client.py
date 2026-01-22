@@ -17,7 +17,7 @@ def get_typesense_client(conn_id: str = "typesense_conn") -> typesense.Client:
                 }
             ],
             "api_key": conn.password,
-            "connection_timeout_seconds": 10,
+            "connection_timeout_seconds": 120,
         }
     )
 
