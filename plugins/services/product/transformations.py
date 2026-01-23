@@ -1,0 +1,104 @@
+import polars as pl
+from helpers.file_to_img_obj import file_to_image_obj
+from helpers.jsonString_json import json_decode
+import json
+
+PHOTO_FOLDER = "photos"
+
+def _parse_json(value):
+    if not value:
+        return None
+
+    try:
+        data = json_decode(value)
+    except Exception:
+        # If it's not valid JSON, it might be a simple string (e.g. for url)
+        # But for translations which are typically objects, falling back to None or empty dict is safer.
+        # However, for 'url' if it is a plain string, we might want to keep it?
+        # Given the schema expects objects for these fields, returning None or empty dict is best to avoid type errors.
+        return None
+
+    if not data:
+        return None
+
+    # Replace None with "" in the dictionary
+    if isinstance(data, dict):
+        data = {k: (v if v is not None else "") for k, v in data.items()}
+
+    return data
+
+def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
+    """
+    Apply transformations to Product data.
+    """
+    lf = lf.with_columns(
+        [
+            # Objects (Translations)
+            pl.col("name").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("short_description").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("long_description").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("meta_title").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("meta_description").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("original_references").map_elements(_parse_json, return_dtype=pl.Object),
+           # pl.col("d3e").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("url").cast(pl.Utf8).fill_null(""),
+
+            # Booleans
+            pl.col("is_visible").cast(pl.Boolean),
+            pl.col("is_obsolete").cast(pl.Boolean),
+
+            # Integers
+            pl.col("id").cast(pl.Int32),
+            pl.col("brand").cast(pl.Int32),
+
+            # Floats
+            pl.col("weight").cast(pl.Float64),
+
+            # Strings
+            pl.col("type").cast(pl.Utf8).fill_null(""),
+            pl.col("customs_code").cast(pl.Utf8).fill_null(""),
+            pl.col("ref").cast(pl.Utf8).fill_null(""),
+            pl.col("barcode").cast(pl.Utf8).fill_null(""),
+            pl.col("comment").cast(pl.Utf8).fill_null(""),
+            pl.col("hs_code").cast(pl.Utf8).fill_null(""),
+
+            # Image
+            pl.col("image")
+            .map_elements(
+                lambda x: file_to_image_obj(x, PHOTO_FOLDER) or {}, return_dtype=pl.Object
+            )
+            .alias("image"),
+        ]
+    )
+
+    # Convert ID to string if needed for Typsense ID (Category does pl.col("id").cast(pl.Utf8) at the end)
+    lf = lf.with_columns([
+        pl.col("id").cast(pl.Utf8)
+    ])
+
+    # Select final columns
+    final_cols = [
+        "id", 
+        "type", 
+        "customs_code", 
+        "ref", 
+        "weight", 
+        "barcode", 
+        "comment", 
+        "name", 
+        "short_description", 
+        "long_description", 
+        "is_visible", 
+        "is_obsolete", 
+        "image", 
+        "hs_code", 
+        "meta_title", 
+        "meta_description", 
+        "original_references", 
+        #"d3e",
+        "url"
+    ]
+    
+    lf = lf.select(final_cols)
+
+    return lf
