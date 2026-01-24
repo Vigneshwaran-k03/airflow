@@ -34,6 +34,13 @@ def product_schema(collection_name: str):
             #d3e and machine
             {"name": "d3e", "type": "object","index":False },
             {"name": "machine", "type": "object", "index":False},
+            {"name": "piece", "type": "object", "index": False, "optional": True},
+            
+            # Extensions
+            {"name": "extensions", "type": "object", "index": False, "optional": True},
+
+            # Categories
+            {"name": "categories", "type": "string[]", "index": True, "reference": "category.id", "optional": True},
         ],
         "enable_nested_fields": True,
     }
