@@ -26,11 +26,14 @@ def product_schema(collection_name: str):
             {"name": "meta_title", "type": "object", "index": True},
             {"name": "meta_description", "type": "object", "index": False},
             {"name": "original_references", "type": "object", "index": False},
-            #{"name": "d3e", "type": "object", "index": False},
             {"name": "url", "type": "string", "optional": True, "index": False},
 
             # Image (Object)
             {"name": "image", "type": "object", "index": False},
+
+            #d3e and machine
+            {"name": "d3e", "type": "object","index":False },
+            {"name": "machine", "type": "object", "index":False},
         ],
         "enable_nested_fields": True,
     }

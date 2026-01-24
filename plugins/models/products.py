@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Text, Boolean, TIMESTAMP, Enum, Numeric
+from sqlalchemy import Column, Integer, String, Float, Text, Boolean, TIMESTAMP, Enum, Numeric, Date
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 
@@ -78,11 +78,39 @@ class Product(Base):
     score = Column(Integer, nullable=False, default=0)
     tr_conseil_reparation = Column(Integer, nullable=True)
     nameplate_details = Column(String(255), nullable=True)
-class d3e(Base):
+
+#d3e
+class D3E(Base):
     __tablename__ = "d3e"
-    
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    id_societe=Column(Integer,nullable=True)
-    nom=Column(String(50),nullable=True)
-    prix = Column(Numeric(6, 2), nullable=True)
-    
+
+    id = Column(Integer, primary_key=True)
+    id_societe = Column(Integer, nullable=False)
+    nom = Column(String(50), nullable=False)
+    prix = Column(Numeric(6, 2), nullable=False)
+    is_main = Column(Boolean, nullable=False)
+
+
+#machine 
+class ProductMachine(Base):
+    __tablename__ = "f_produits_machine"
+
+    id = Column(Integer, primary_key=True)
+    id_produit = Column(Integer, unique=True, nullable=False)
+    id_fournisseur = Column(Integer, nullable=False)
+    id_arborescence = Column(Integer, nullable=False)
+    ref_usine = Column(String(50), nullable=False)
+    repair_score = Column(Numeric(5,2))
+    prix_achat = Column(Numeric(10,2))
+    tarif_remise_a = Column(Numeric(10,2))
+    tarif_remise_aa = Column(Numeric(10,2))
+    tarif_remise_b = Column(Numeric(10,2))
+    tarif_remise_c = Column(Numeric(10,2))
+    PPI_permanent = Column(Numeric(10,2))
+    PPI_promo = Column(Numeric(10,2))
+    dpr_cegid = Column(Numeric(10,2))
+    dpr_reel = Column(Numeric(10,2))
+    vue_eclatee = Column(String(150))
+    is_motor = Column(Boolean)
+    is_repair_forbidden = Column(Boolean)
+    return_rate = Column(Numeric(5,2))
+    max_return_rate = Column(Numeric(5,2))

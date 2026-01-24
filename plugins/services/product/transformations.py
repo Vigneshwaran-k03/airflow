@@ -40,7 +40,6 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("meta_title").map_elements(_parse_json, return_dtype=pl.Object),
             pl.col("meta_description").map_elements(_parse_json, return_dtype=pl.Object),
             pl.col("original_references").map_elements(_parse_json, return_dtype=pl.Object),
-           # pl.col("d3e").map_elements(_parse_json, return_dtype=pl.Object),
             pl.col("url").cast(pl.Utf8).fill_null(""),
 
             # Booleans
@@ -55,12 +54,27 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("weight").cast(pl.Float64),
 
             # Strings
-            pl.col("type").cast(pl.Utf8).fill_null(""),
             pl.col("customs_code").cast(pl.Utf8).fill_null(""),
             pl.col("ref").cast(pl.Utf8).fill_null(""),
             pl.col("barcode").cast(pl.Utf8).fill_null(""),
             pl.col("comment").cast(pl.Utf8).fill_null(""),
             pl.col("hs_code").cast(pl.Utf8).fill_null(""),
+
+            #type
+            pl.when(pl.col("type") == "KIT")
+            .then(pl.lit("piece"))
+            .otherwise(pl.col("type"))
+            .cast(pl.Utf8)
+            .fill_null("")
+            .alias("type"),
+
+
+            #d3e
+            pl.col("d3e").map_elements(_parse_json, return_dtype=pl.Object),
+            #machine
+           pl.col("machine")
+            .map_elements(_parse_json, return_dtype=pl.Object)
+            .map_elements(_map_exploded_view, return_dtype=pl.Object),
 
             # Image
             pl.col("image")
@@ -95,7 +109,8 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "meta_title", 
         "meta_description", 
         "original_references", 
-        #"d3e",
+        "d3e",
+        "machine",
         "url"
     ]
     
