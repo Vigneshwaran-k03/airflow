@@ -114,3 +114,90 @@ class ProductMachine(Base):
     is_repair_forbidden = Column(Boolean)
     return_rate = Column(Numeric(5,2))
     max_return_rate = Column(Numeric(5,2))
+
+#Piece
+class ProductPiece(Base):
+    __tablename__ = "f_produits_piece"
+
+    id = Column(Integer, primary_key=True)
+    prix_swap = Column(Numeric(10, 2), nullable=False)
+    isLocked = Column(Boolean, nullable=False)
+    is_consommable = Column(Boolean, nullable=False)
+    is_alaune = Column(Boolean, nullable=False)
+    forcedSale = Column(Integer, nullable=False)
+    isForced = Column(Boolean, nullable=False, default=True)
+    is_origine = Column(Boolean, nullable=False, default=True)
+    id_branche_technique = Column(Integer, nullable=True)
+
+#for extensions
+class Environment(Base):
+    __tablename__ = "environment"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    parent_id = Column(Integer, nullable=True)
+    society_id = Column(Integer, nullable=True)
+    label = Column(String(45), nullable=False, unique=True)
+    name = Column(String(45), nullable=True)
+    nature = Column(Enum('root','eshop','collect','vitrine'), nullable=False)
+    tax_rate = Column(Numeric(5, 2), nullable=False, default=0.00)
+    is_locked = Column(Integer, nullable=False, default=0)
+    use_linked_products = Column(Boolean, nullable=True, default=False)
+    logo = Column(String(128), nullable=True)
+    favicon = Column(String(128), nullable=True)
+    home_image = Column(String(255), nullable=True)
+    home_image_link = Column(String(255), nullable=True)
+    contact_tel = Column(String(32), nullable=True)
+    service_tel = Column(String(32), nullable=True)
+    primary_color = Column(String(7), nullable=True)
+    secondary_color = Column(String(7), nullable=True)
+    tertiary_color = Column(String(7), nullable=True)
+    title_font = Column(String(64), nullable=True)
+    text_font = Column(String(64), nullable=True)
+    repair_category_id = Column(Integer, nullable=True)
+    top_sales_category_id = Column(Integer, nullable=True)
+    refurbished_category_id = Column(Integer, nullable=True)
+    gtm_identifier = Column(String(45), nullable=True)
+    url_pattern = Column(String(255), nullable=True)
+    promo_banner_data = Column(Text, nullable=True)  # Json
+    created_at = Column(TIMESTAMP, nullable=False, server_default=func.current_timestamp())
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
+
+class LEnvironmentProduct(Base):
+    __tablename__ = "l_environment_product"
+
+    environment_id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, primary_key=True)
+    reference = Column(String(50), nullable=True)
+    price = Column(Numeric(10, 2), nullable=True)
+    price_promo = Column(Numeric(10, 2), nullable=True)
+    discount_start_date = Column(Date, nullable=True)
+    discount_end_date = Column(Date, nullable=True)
+    currency_id = Column(Integer, nullable=True, default=1)
+    is_visible = Column(Boolean, nullable=True)
+    forced_sale = Column(Integer, nullable=True)
+    is_price_forced = Column(Boolean, nullable=True)
+    url = Column(String(250), nullable=True)
+    tr_meta_title = Column(Integer, nullable=True)
+    tr_meta_description = Column(Integer, nullable=True)
+    tr_description_short = Column(Integer, nullable=True)
+    tr_description_long = Column(Integer, nullable=True)
+    tr_specifics = Column(Integer, nullable=True)
+    tr_original_references = Column(Integer, nullable=True)
+    tr_product_name = Column(Integer, nullable=True)
+    img = Column(String(255), nullable=True)
+    score = Column(Integer, nullable=True)
+    fixed_columns = Column(Integer, nullable=False, default=0)
+    moderated_at = Column(TIMESTAMP, nullable=True)
+    modified_at = Column(TIMESTAMP, nullable=True, onupdate=func.current_timestamp())
+    is_calculation_avoided = Column(Integer, nullable=True, default=0)
+    review_count = Column(Integer, nullable=True)
+    average_rating = Column(Float, nullable=True)
+    default_category_id = Column(String(45), nullable=True)
+
+#categories
+class Category(Base):
+    __tablename__ = "catman_product"
+
+    catman_id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, primary_key=True)
+    order = Column(Integer, nullable=True)	

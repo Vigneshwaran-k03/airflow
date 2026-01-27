@@ -1,9 +1,12 @@
 import polars as pl
 from helpers.file_to_img_obj import file_to_image_obj
 from helpers.jsonString_json import json_decode
+from helpers.product_extensions_transform import _transform_extensions
 import json
 
 PHOTO_FOLDER = "photos"
+EXPLODED_VIEW_FOLDER = "images/produits/vues_eclatees"
+
 
 def _parse_json(value):
     if not value:
@@ -26,6 +29,22 @@ def _parse_json(value):
         data = {k: (v if v is not None else "") for k, v in data.items()}
 
     return data
+#exploded view for the machine field
+def _map_exploded_view(machine: dict):
+    if not machine:
+        return None
+
+    # drop fully empty machine
+    if not machine.get("id"):
+        return None
+
+    if machine.get("exploded_view"):
+        machine["exploded_view"] = file_to_image_obj(
+            machine["exploded_view"],
+            EXPLODED_VIEW_FOLDER
+        ) or {}
+
+    return machine
 
 def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     """
@@ -48,7 +67,7 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
 
             # Integers
             pl.col("id").cast(pl.Int32),
-            pl.col("brand").cast(pl.Int32),
+            pl.col("brand").cast(pl.Utf8).fill_null(""),
 
             # Floats
             pl.col("weight").cast(pl.Float64),
@@ -76,12 +95,27 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             .map_elements(_parse_json, return_dtype=pl.Object)
             .map_elements(_map_exploded_view, return_dtype=pl.Object),
 
+            # piece
+            pl.col("piece")
+            .map_elements(_parse_json, return_dtype=pl.Object)
+            .map_elements(lambda x: x if x and x.get("id") else None, return_dtype=pl.Object),
+
             # Image
             pl.col("image")
             .map_elements(
                 lambda x: file_to_image_obj(x, PHOTO_FOLDER) or {}, return_dtype=pl.Object
             )
             .alias("image"),
+            
+            # Categories
+            # json_arrayagg returns a string representation of a list, we need to parse it
+            pl.col("categories")
+            .map_elements(lambda x: [str(i) for i in json_decode(x)] if x else [], return_dtype=pl.List(pl.Utf8))
+            .alias("categories"),
+
+            # EXTENSIONS
+            pl.col("extensions")
+            .map_elements(_transform_extensions, return_dtype=pl.Object),
         ]
     )
 
@@ -111,7 +145,11 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "original_references", 
         "d3e",
         "machine",
-        "url"
+        "piece",
+        "url",
+        "brand",
+        "categories",
+        "extensions"
     ]
     
     lf = lf.select(final_cols)
