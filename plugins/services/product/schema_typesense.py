@@ -31,16 +31,22 @@ def product_schema(collection_name: str):
             # Image (Object)
             {"name": "image", "type": "object", "index": False},
 
-            #d3e and machine
+            #d3e,machine and piece
             {"name": "d3e", "type": "object","index":False },
             {"name": "machine", "type": "object", "index":False},
-            {"name": "piece", "type": "object", "index": False, "optional": True},
+            {"name": "piece", "type": "object", "index": False},
             
             # Extensions
-            {"name": "extensions", "type": "object", "index": False, "optional": True},
+            {"name": "extensions", "type": "object", "index": False},
 
-            # Categories
-            {"name": "categories", "type": "string[]", "index": True, "reference": "category.id", "optional": True},
+            #Categories
+            {"name": "categories", "type": "int32[]", "index": False},
+
+            #Machines, pieces, parts
+            {"name": "machines", "type": "int32[]", "index": False},
+            {"name": "pieces", "type": "int32[]", "index": False},
+            {"name": "parts", "type": "int32[]", "index": False},
+
         ],
         "enable_nested_fields": True,
     }
