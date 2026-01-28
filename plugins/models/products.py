@@ -129,6 +129,15 @@ class ProductPiece(Base):
     is_origine = Column(Boolean, nullable=False, default=True)
     id_branche_technique = Column(Integer, nullable=True)
 
+#Parts
+class PieceParts(Base):
+    __tablename__ = "l_pieces_parts"
+
+    id_piece = Column(Integer, primary_key=True, nullable=False)
+    id_part = Column(Integer, primary_key=True, nullable=False)
+    qte = Column(Integer, nullable=False, default=1)
+
+
 #for extensions
 class Environment(Base):
     __tablename__ = "environment"
@@ -200,4 +209,13 @@ class Category(Base):
 
     catman_id = Column(Integer, primary_key=True)
     product_id = Column(Integer, primary_key=True)
-    order = Column(Integer, nullable=True)	
+    order = Column(Integer, nullable=True)
+
+#Machines and Pieces
+class Machines_and_Pieces(Base):
+    __tablename__ = "l_machines_pieces"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_machine = Column(Integer, nullable=False)
+    id_piece = Column(Integer, nullable=False)
+

@@ -1,6 +1,14 @@
 from sqlalchemy import select, func, cast, String
 from sqlalchemy.orm import aliased
-from models.products import Product, D3E, ProductMachine, Environment, LEnvironmentProduct, ProductPiece, Category
+from models.products import (Product,
+ D3E, 
+ ProductMachine, 
+ Environment, 
+ LEnvironmentProduct, 
+ Category,
+ ProductPiece,
+ Machines_and_Pieces,
+ PieceParts)
 from models.translation import Translate
 
 def product_base_query(limit: int = None, offset: int = None):
@@ -20,16 +28,6 @@ def product_base_query(limit: int = None, offset: int = None):
     t_ext_long_desc = aliased(Translate, name="t_ext_long_desc")
     t_ext_specifics = aliased(Translate, name="t_ext_specifics")
     t_ext_orig_refs = aliased(Translate, name="t_ext_orig_refs")
-
-    # Categories Subquery
-    categories_subquery = (
-        select(
-            Category.product_id,
-            func.json_arrayagg(Category.catman_id).label("categories")
-        )
-        .group_by(Category.product_id)
-        .subquery()
-    )
 
     # Subquery for Extensions
     extensions_subquery = (
@@ -82,6 +80,41 @@ def product_base_query(limit: int = None, offset: int = None):
         .correlate(Product)
         .scalar_subquery()
     )
+    # Subquery for categories
+    categories_subquery = (
+    select(
+        func.json_arrayagg(Category.catman_id)
+    )
+    .where(Category.product_id == Product.id)
+    .correlate(Product)
+    .scalar_subquery()
+)    
+    # Subquery for pieces
+    pieces_from_machine_subquery = (
+    select(func.json_arrayagg(Machines_and_Pieces.id_piece))
+    .where(Machines_and_Pieces.id_machine == Product.id_machine)
+    .where(Product.id_machine > 0)
+    .correlate(Product)
+    .scalar_subquery()
+)
+    # Subquery for machines
+    machines_from_piece_subquery = (
+    select(func.json_arrayagg(Machines_and_Pieces.id_machine))
+    .where(Machines_and_Pieces.id_piece == Product.id_piece)
+    .where(Product.id_piece > 0)
+    .correlate(Product)
+    .scalar_subquery()
+)
+
+    # Subquery for parts
+    parts_from_piece_subquery = (
+    select(func.json_arrayagg(PieceParts.id_part))
+    .where(PieceParts.id_piece == Product.id_piece)
+    .where(Product.id_piece > 0)
+    .correlate(Product)
+    .scalar_subquery()
+)
+
 
     # query
     stmt = select(
@@ -101,7 +134,7 @@ def product_base_query(limit: int = None, offset: int = None):
         
         # Translation: generated_long_description -> long_description
         cast(func.json_object(*Translate.json_args(t_long_desc)), String).label('long_description'),
-        
+ 
         Product.is_visible,
         Product.is_obsolete,
         
@@ -122,7 +155,7 @@ def product_base_query(limit: int = None, offset: int = None):
         # Translation: generated_original_references -> original_references
         cast(func.json_object(*Translate.json_args(t_orig_refs)), String).label('original_references'),
         
-        # generated_url -> url (Assuming it contains a JSON string or similar that needs parsing)
+        # Url 
         Product.swapUrl.label('url'),
 
         #d3e
@@ -157,29 +190,34 @@ def product_base_query(limit: int = None, offset: int = None):
         "max_return_rate", ProductMachine.max_return_rate,
         "exploded_view", ProductMachine.vue_eclatee,
         "universal_branch", ProductMachine.id_arborescence
-        ), String
-        ).label("machine"),
+        ), String).label("machine"),
 
-        # Piece
-        cast(
+       #Piece
+       cast(
         func.json_object(
-            "id", ProductPiece.id,
-            "swap_price", ProductPiece.prix_swap,
-            "has_fixed_price", ProductPiece.isLocked,
-            "is_consumable", ProductPiece.is_consommable,
-            "is_highlighted", ProductPiece.is_alaune,
-            "forced_sale_duration", ProductPiece.forcedSale,
-            "has_forced_price", ProductPiece.isForced,
-            "is_origin", ProductPiece.is_origine,
-            "technical_branch", ProductPiece.id_branche_technique
-        ), String
-        ).label("piece"),
+        "id", ProductPiece.id,
+        "swap_price", ProductPiece.prix_swap,
+        "has_fixed_price", ProductPiece.isLocked,
+        "is_consumable", ProductPiece.is_consommable,
+        "is_highlighted", ProductPiece.is_alaune,
+        "forced_sale_duration", ProductPiece.forcedSale,
+        "has_forced_price", ProductPiece.isForced,
+        "is_origin", ProductPiece.is_origine,
+        "technical_branch", ProductPiece.id_branche_technique
+        ),String).label("piece"),
+
 
         # Categories
-        categories_subquery.c.categories,
+        cast(categories_subquery, String).label("categories"),
 
-        # EXTENSIONS (New Field)
-        extensions_subquery.label("extensions")
+        # EXTENSIONS
+        extensions_subquery.label("extensions"),
+
+        # Machines and Pieces
+        cast(pieces_from_machine_subquery, String).label("pieces"),
+        cast(machines_from_piece_subquery, String).label("machines"),
+        cast(parts_from_piece_subquery, String).label("parts"),
+
 
     ).select_from(Product)
 
@@ -193,7 +231,9 @@ def product_base_query(limit: int = None, offset: int = None):
     stmt = stmt.outerjoin(D3E, Product.id_d3e == D3E.id)
     stmt = stmt.outerjoin(ProductMachine, Product.id_machine == ProductMachine.id)
     stmt = stmt.outerjoin(ProductPiece, Product.id_piece == ProductPiece.id)
-    stmt = stmt.outerjoin(categories_subquery, Product.id == categories_subquery.c.product_id)
+
+
+
     if limit is not None:
         stmt = stmt.limit(limit)
     if offset is not None:

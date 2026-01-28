@@ -95,10 +95,8 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             .map_elements(_parse_json, return_dtype=pl.Object)
             .map_elements(_map_exploded_view, return_dtype=pl.Object),
 
-            # piece
-            pl.col("piece")
-            .map_elements(_parse_json, return_dtype=pl.Object)
-            .map_elements(lambda x: x if x and x.get("id") else None, return_dtype=pl.Object),
+            #Piece
+            pl.col("piece").map_elements(_parse_json, return_dtype=pl.Object),
 
             # Image
             pl.col("image")
@@ -106,16 +104,20 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
                 lambda x: file_to_image_obj(x, PHOTO_FOLDER) or {}, return_dtype=pl.Object
             )
             .alias("image"),
-            
-            # Categories
-            # json_arrayagg returns a string representation of a list, we need to parse it
-            pl.col("categories")
-            .map_elements(lambda x: [str(i) for i in json_decode(x)] if x else [], return_dtype=pl.List(pl.Utf8))
-            .alias("categories"),
 
             # EXTENSIONS
             pl.col("extensions")
             .map_elements(_transform_extensions, return_dtype=pl.Object),
+
+            #Categories
+            pl.col("categories").map_elements(_parse_json, return_dtype=pl.Object),
+
+            #machines, pieces and parts
+             pl.col("machines").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("pieces").map_elements(_parse_json, return_dtype=pl.Object),
+            pl.col("parts").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
+
+
         ]
     )
 
@@ -149,7 +151,10 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "url",
         "brand",
         "categories",
-        "extensions"
+        "extensions",
+        "machines",
+        "pieces",
+        "parts"
     ]
     
     lf = lf.select(final_cols)
