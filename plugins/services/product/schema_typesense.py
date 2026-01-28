@@ -47,6 +47,11 @@ def product_schema(collection_name: str):
             {"name": "pieces", "type": "int32[]", "index": False},
             {"name": "parts", "type": "int32[]", "index": False},
 
+            # Characteristics
+            {"name": "characteristics","type": "object","index": False}
+
+
+
         ],
         "enable_nested_fields": True,
     }
