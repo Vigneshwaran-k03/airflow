@@ -6,6 +6,7 @@ import json
 
 PHOTO_FOLDER = "photos"
 EXPLODED_VIEW_FOLDER = "images/produits/vues_eclatees"
+DOCUMENTS_FOLDER = "documents/produits"
 
 
 def _parse_json(value):
@@ -45,6 +46,40 @@ def _map_exploded_view(machine: dict):
         ) or {}
 
     return machine
+
+def _transform_packaging(value):
+    data = _parse_json(value)
+    if not data:
+        return None
+    
+    if isinstance(data, dict):
+        # Round float values to 2 decimal places
+        for k, v in data.items():
+            if isinstance(v, float):
+                data[k] = round(v, 2)
+    
+    return data
+
+
+def _transform_documents(value):
+    data = _parse_json(value)
+    if not data:
+        return []
+    
+    if isinstance(data, list):
+        for doc in data:
+            if isinstance(doc, dict) and doc.get("file"):
+                current_folder = DOCUMENTS_FOLDER
+                if doc.get("dossier"):
+                    current_folder = f"{DOCUMENTS_FOLDER}/{doc['dossier']}"
+                    # remove dossier field as it is not needed in final output
+                    del doc["dossier"]
+                
+                doc["file"] = file_to_image_obj(doc["file"], current_folder)
+            else:
+                 pass
+    return data
+
 
 def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     """
@@ -120,6 +155,15 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             #characteristics
             pl.col("characteristics").map_elements(_parse_json, return_dtype=pl.Object),
 
+            #packaging
+            pl.col("packaging").map_elements(_transform_packaging, return_dtype=pl.Object),
+
+            #documents
+            pl.col("documents").map_elements(_transform_documents, return_dtype=pl.Object),
+
+            #environment
+            pl.col("environment").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
+
 
 
         ]
@@ -159,7 +203,10 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "machines",
         "pieces",
         "parts",
-        "characteristics"
+        "characteristics",
+        "packaging",
+        "documents",
+        "environment"
     ]
     
     lf = lf.select(final_cols)

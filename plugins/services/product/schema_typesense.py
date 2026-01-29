@@ -48,7 +48,16 @@ def product_schema(collection_name: str):
             {"name": "parts", "type": "int32[]", "index": False},
 
             # Characteristics
-            {"name": "characteristics","type": "object","index": False}
+            {"name": "characteristics","type": "object","index": False},
+
+            # Packaging
+            {"name": "packaging", "type": "object", "index": False},
+
+            # Documents
+            {"name": "documents", "type": "object", "index": False , "optional": True},
+
+            # Environment
+            {"name": "environment", "type": "string[]", "index": False}
 
 
 

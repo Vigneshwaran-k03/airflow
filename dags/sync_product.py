@@ -39,7 +39,7 @@ with DAG(
         op_kwargs={
             "parquet_file": "/opt/airflow/tmp/product_chunked",
             "collection_name": "products",
-            "batch_size": 5_000,
+            "batch_size": 10_000,
         },
     )
 

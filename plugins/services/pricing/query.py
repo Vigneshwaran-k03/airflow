@@ -57,7 +57,6 @@ def pricing_environment_query():
     """
     return (
         select(
-            # Return all environment labels as JSON array
             func.coalesce(
                 func.json_arrayagg(
                     environment.c.label
