@@ -8,7 +8,9 @@ from models.products import (Product,
  Category,
  ProductPiece,
  Machines_and_Pieces,
- PieceParts)
+ PieceParts,
+ CharacteristicPiece,
+ CharacteristicMachine)
 from models.translation import Translate
 
 def product_base_query(limit: int = None, offset: int = None):
@@ -91,30 +93,41 @@ def product_base_query(limit: int = None, offset: int = None):
 )    
     # Subquery for pieces
     pieces_from_machine_subquery = (
-    select(func.json_arrayagg(Machines_and_Pieces.id_piece))
-    .where(Machines_and_Pieces.id_machine == Product.id_machine)
-    .where(Product.id_machine > 0)
-    .correlate(Product)
-    .scalar_subquery()
-)
+        select(func.json_arrayagg(Machines_and_Pieces.id_piece))
+        .where(Machines_and_Pieces.id_machine == Product.id)
+        .correlate(Product)
+        .scalar_subquery()
+    )
     # Subquery for machines
     machines_from_piece_subquery = (
-    select(func.json_arrayagg(Machines_and_Pieces.id_machine))
-    .where(Machines_and_Pieces.id_piece == Product.id_piece)
-    .where(Product.id_piece > 0)
-    .correlate(Product)
-    .scalar_subquery()
-)
+        select(func.json_arrayagg(Machines_and_Pieces.id_machine))
+        .where(Machines_and_Pieces.id_piece == Product.id)
+        .correlate(Product)
+        .scalar_subquery()
+    )
 
     # Subquery for parts
     parts_from_piece_subquery = (
-    select(func.json_arrayagg(PieceParts.id_part))
-    .where(PieceParts.id_piece == Product.id_piece)
-    .where(Product.id_piece > 0)
-    .correlate(Product)
-    .scalar_subquery()
-)
-
+        select(func.json_arrayagg(PieceParts.id_part))
+        .where(PieceParts.id_piece == Product.id_piece)
+        .where(Product.id_piece > 0)
+        .correlate(Product)
+        .scalar_subquery()
+    )
+    # Subquery for machine characteristics
+    machine_characteristics_subquery = (
+        select(func.json_arrayagg(CharacteristicMachine.id_caracteristique))
+        .where(CharacteristicMachine.id_produit == Product.id)
+        .correlate(Product)
+        .scalar_subquery()
+    )
+    # Subquery for piece characteristics
+    piece_characteristics_subquery =(
+        select(func.json_arrayagg(CharacteristicPiece.characteristic_id))
+        .where(CharacteristicPiece.piece_id == Product.id_piece)
+        .correlate(Product)
+        .scalar_subquery()
+    )
 
     # query
     stmt = select(
@@ -217,6 +230,11 @@ def product_base_query(limit: int = None, offset: int = None):
         cast(pieces_from_machine_subquery, String).label("pieces"),
         cast(machines_from_piece_subquery, String).label("machines"),
         cast(parts_from_piece_subquery, String).label("parts"),
+
+        #Characteristics
+        cast(func.json_object("machine", machine_characteristics_subquery,
+        "piece", piece_characteristics_subquery),String).label("characteristics"),
+
 
 
     ).select_from(Product)

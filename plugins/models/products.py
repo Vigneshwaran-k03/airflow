@@ -219,3 +219,21 @@ class Machines_and_Pieces(Base):
     id_machine = Column(Integer, nullable=False)
     id_piece = Column(Integer, nullable=False)
 
+#characteristic for piece
+class CharacteristicPiece(Base):
+    __tablename__ = "characteristic_piece_value"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    piece_id = Column(Integer, nullable=True)
+    characteristic_id = Column(Integer, nullable=True)
+
+#characteristic for machine
+class CharacteristicMachine(Base):
+    __tablename__ = "l_caracteristiques_produits"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_produit = Column(Integer, nullable=True)
+    id_caracteristique = Column(Integer, nullable=True)
+
+    
+
