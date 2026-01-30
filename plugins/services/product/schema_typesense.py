@@ -57,7 +57,11 @@ def product_schema(collection_name: str):
             {"name": "documents", "type": "object", "index": False , "optional": True},
 
             # Environment
-            {"name": "environment", "type": "string[]", "index": False}
+            {"name": "environment", "type": "string[]", "index": False},
+
+            #Pricing
+            {"name": "pricing", "type": "object", "index": False}
+
 
 
 

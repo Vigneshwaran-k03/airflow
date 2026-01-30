@@ -164,6 +164,10 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             #environment
             pl.col("environment").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
 
+            #pricing
+            pl.col("pricing").map_elements(_parse_json, return_dtype=pl.Object),
+
+
 
 
         ]
@@ -206,7 +210,8 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "characteristics",
         "packaging",
         "documents",
-        "environment"
+        "environment",
+        "pricing"
     ]
     
     lf = lf.select(final_cols)

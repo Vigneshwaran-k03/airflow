@@ -258,3 +258,5 @@ class tarifs(Base):
     debut = Column(Date, nullable=True)
     fin = Column(Date, nullable=True)
     reduc = Column(Numeric(5,2), nullable=True)
+    is_enabled = Column(Boolean, nullable=True)
+
