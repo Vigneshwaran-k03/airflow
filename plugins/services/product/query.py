@@ -10,7 +10,11 @@ from models.products import (Product,
  Machines_and_Pieces,
  PieceParts,
  CharacteristicPiece,
- CharacteristicMachine)
+ CharacteristicMachine,
+ Packaging,
+ Document,
+ DocumentType,
+ EnvironmentProduct)
 from models.translation import Translate
 
 def product_base_query(limit: int = None, offset: int = None):
@@ -30,6 +34,9 @@ def product_base_query(limit: int = None, offset: int = None):
     t_ext_long_desc = aliased(Translate, name="t_ext_long_desc")
     t_ext_specifics = aliased(Translate, name="t_ext_specifics")
     t_ext_orig_refs = aliased(Translate, name="t_ext_orig_refs")
+
+    # Alias for Document Environment
+    DocEnv = aliased(Environment, name="doc_env")
 
     # Subquery for Extensions
     extensions_subquery = (
@@ -125,6 +132,42 @@ def product_base_query(limit: int = None, offset: int = None):
     piece_characteristics_subquery =(
         select(func.json_arrayagg(CharacteristicPiece.characteristic_id))
         .where(CharacteristicPiece.piece_id == Product.id_piece)
+        .correlate(Product)
+        .scalar_subquery()
+    )
+
+    # Subquery for documents
+    documents_subquery = (
+        select(
+            func.json_arrayagg(
+                func.json_object(
+                    "id", Document.id,
+                    "language_id", Document.id_langue,
+                    "type_id", Document.id_type,
+                    "file", Document.file,
+                    "name", Document.name,
+                    "order", Document.order,
+                    "name", Document.name,
+                    "order", Document.order,
+                    "environment", DocEnv.label,
+                    "dossier", DocumentType.dossier
+                )
+            )
+        )
+        .select_from(Document)
+        .outerjoin(DocEnv, Document.environment_id == DocEnv.id)
+        .outerjoin(DocumentType, Document.id_type == DocumentType.id)
+        .where(Document.id_machine == Product.id)
+        .correlate(Product)
+        .scalar_subquery()
+    )
+
+    # Subquery for environment
+    environment_subquery = (
+        select(func.json_arrayagg(Environment.label))
+        .select_from(EnvironmentProduct)
+        .join(Environment, EnvironmentProduct.environment_id == Environment.id)
+        .where(EnvironmentProduct.product_id == Product.id)
         .correlate(Product)
         .scalar_subquery()
     )
@@ -235,6 +278,24 @@ def product_base_query(limit: int = None, offset: int = None):
         cast(func.json_object("machine", machine_characteristics_subquery,
         "piece", piece_characteristics_subquery),String).label("characteristics"),
 
+        # Packaging
+        cast(
+            func.json_object(
+                "product_length", Packaging.produit_x,
+                "product_height", Packaging.produit_y,
+                "product_depth", Packaging.produit_z,
+                "package_length", Packaging.colis_x,
+                "package_height", Packaging.colis_y,
+                "package_depth", Packaging.colis_z
+            ), String
+        ).label("packaging"),
+
+        #Documents
+        cast(documents_subquery, String).label("documents"),
+        
+        # Environment
+        cast(environment_subquery, String).label("environment"),
+
 
 
     ).select_from(Product)
@@ -249,6 +310,7 @@ def product_base_query(limit: int = None, offset: int = None):
     stmt = stmt.outerjoin(D3E, Product.id_d3e == D3E.id)
     stmt = stmt.outerjoin(ProductMachine, Product.id_machine == ProductMachine.id)
     stmt = stmt.outerjoin(ProductPiece, Product.id_piece == ProductPiece.id)
+    stmt = stmt.outerjoin(Packaging, Product.id == Packaging.id_produit)
 
 
 

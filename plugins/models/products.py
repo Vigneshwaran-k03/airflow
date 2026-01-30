@@ -120,6 +120,7 @@ class ProductPiece(Base):
     __tablename__ = "f_produits_piece"
 
     id = Column(Integer, primary_key=True)
+    id_produit = Column(Integer, nullable=False)
     prix_swap = Column(Numeric(10, 2), nullable=False)
     isLocked = Column(Boolean, nullable=False)
     is_consommable = Column(Boolean, nullable=False)
@@ -146,30 +147,7 @@ class Environment(Base):
     parent_id = Column(Integer, nullable=True)
     society_id = Column(Integer, nullable=True)
     label = Column(String(45), nullable=False, unique=True)
-    name = Column(String(45), nullable=True)
-    nature = Column(Enum('root','eshop','collect','vitrine'), nullable=False)
     tax_rate = Column(Numeric(5, 2), nullable=False, default=0.00)
-    is_locked = Column(Integer, nullable=False, default=0)
-    use_linked_products = Column(Boolean, nullable=True, default=False)
-    logo = Column(String(128), nullable=True)
-    favicon = Column(String(128), nullable=True)
-    home_image = Column(String(255), nullable=True)
-    home_image_link = Column(String(255), nullable=True)
-    contact_tel = Column(String(32), nullable=True)
-    service_tel = Column(String(32), nullable=True)
-    primary_color = Column(String(7), nullable=True)
-    secondary_color = Column(String(7), nullable=True)
-    tertiary_color = Column(String(7), nullable=True)
-    title_font = Column(String(64), nullable=True)
-    text_font = Column(String(64), nullable=True)
-    repair_category_id = Column(Integer, nullable=True)
-    top_sales_category_id = Column(Integer, nullable=True)
-    refurbished_category_id = Column(Integer, nullable=True)
-    gtm_identifier = Column(String(45), nullable=True)
-    url_pattern = Column(String(255), nullable=True)
-    promo_banner_data = Column(Text, nullable=True)  # Json
-    created_at = Column(TIMESTAMP, nullable=False, server_default=func.current_timestamp())
-    updated_at = Column(TIMESTAMP, nullable=False, server_default=func.current_timestamp(), onupdate=func.current_timestamp())
 
 class LEnvironmentProduct(Base):
     __tablename__ = "l_environment_product"
@@ -235,5 +213,48 @@ class CharacteristicMachine(Base):
     id_produit = Column(Integer, nullable=True)
     id_caracteristique = Column(Integer, nullable=True)
 
-    
+#Packaging
+class Packaging(Base):
+    __tablename__ = "f_produits_colisage"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_produit = Column(Integer, nullable=True)
+    produit_x = Column(Float, nullable=True)
+    produit_y = Column(Float, nullable=True)
+    produit_z = Column(Float, nullable=True)
+    colis_x = Column(Float, nullable=True)
+    colis_y = Column(Float, nullable=True)
+    colis_z = Column(Float, nullable=True)
 
+#Documents
+class Document(Base):
+    __tablename__ = "l_documents_machines"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_machine = Column(Integer, nullable=True)
+    id_langue = Column(String(2), nullable=True)
+    id_type = Column(Integer, nullable=True)
+    environment_id = Column(Integer, nullable=True)
+    file = Column(String(255), nullable=True)
+    name = Column(String(128), nullable=True)
+    order = Column(Integer, nullable=True)	
+
+class DocumentType(Base):
+    __tablename__ = "documents_types"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    dossier = Column(String(32), nullable=False)
+    
+#Environment product
+class EnvironmentProduct(Base):
+    __tablename__ = "#environment_product"
+
+    environment_id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, primary_key=True)
+#Pricing field tables
+class tarifs(Base):
+    __tablename__ = "tarifs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    debut = Column(Date, nullable=True)
+    fin = Column(Date, nullable=True)
+    reduc = Column(Numeric(5,2), nullable=True)

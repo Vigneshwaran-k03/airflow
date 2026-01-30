@@ -66,9 +66,9 @@ def import_batch_with_retry(
 def push_product_to_typesense(
     parquet_file: str,
     collection_name: str,
-    batch_size: int = 5_000,
+    batch_size: int = 10_000,
     delay_between_batches: float = 1.5,
-    delay_between_files: float = 5.0,
+    delay_between_files: float = 3.0,
 ):
     """
     Import Parquet files into Typesense safely, one file at a time,
