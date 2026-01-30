@@ -14,7 +14,8 @@ from models.products import (Product,
  Packaging,
  Document,
  DocumentType,
- EnvironmentProduct)
+ EnvironmentProduct,
+ tarifs)
 from models.translation import Translate
 
 def product_base_query(limit: int = None, offset: int = None):
@@ -37,6 +38,13 @@ def product_base_query(limit: int = None, offset: int = None):
 
     # Alias for Document Environment
     DocEnv = aliased(Environment, name="doc_env")
+
+    # Base price expression for pricing
+    base_price_expr = func.coalesce(
+        LEnvironmentProduct.price,
+        ProductPiece.prix_swap
+    )
+
 
     # Subquery for Extensions
     extensions_subquery = (
@@ -171,6 +179,37 @@ def product_base_query(limit: int = None, offset: int = None):
         .correlate(Product)
         .scalar_subquery()
     )
+    
+    # Subquery for pricing
+    pricing_subquery = (
+    select(
+        func.json_objectagg(
+            cast(tarifs.id, String),  # key → tariff id
+            func.round(
+                base_price_expr * (1 - (tarifs.reduc / 100)),
+                2
+            )
+        )
+    )
+    .select_from(tarifs)
+    .outerjoin(
+        LEnvironmentProduct,
+        LEnvironmentProduct.product_id == Product.id
+    )
+    .outerjoin(
+        ProductPiece,
+        ProductPiece.id == Product.id_piece
+    )
+    .where(
+        (tarifs.debut == None) | (tarifs.debut <= func.now())
+    )
+    .where(
+        (tarifs.fin == None) | (tarifs.fin >= func.now())
+    ).
+    where(tarifs.is_enabled == 1)
+    .correlate(Product)
+    .scalar_subquery()
+    )
 
     # query
     stmt = select(
@@ -296,6 +335,10 @@ def product_base_query(limit: int = None, offset: int = None):
         # Environment
         cast(environment_subquery, String).label("environment"),
 
+        # Pricing
+        cast(pricing_subquery, String).label("pricing"),
+
+
 
 
     ).select_from(Product)
@@ -311,6 +354,7 @@ def product_base_query(limit: int = None, offset: int = None):
     stmt = stmt.outerjoin(ProductMachine, Product.id_machine == ProductMachine.id)
     stmt = stmt.outerjoin(ProductPiece, Product.id_piece == ProductPiece.id)
     stmt = stmt.outerjoin(Packaging, Product.id == Packaging.id_produit)
+   
 
 
 
