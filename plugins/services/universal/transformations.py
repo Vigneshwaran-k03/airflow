@@ -94,6 +94,7 @@ def transform_universal_data(lf: pl.LazyFrame) -> pl.LazyFrame:
                 _parse_parent_ids,
                 return_dtype=pl.List(pl.Int32),
             ),
+            pl.col("depreciation_rate").cast(pl.Float64).fill_null(0.0),
         ]
     )
 

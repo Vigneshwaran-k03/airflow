@@ -64,7 +64,8 @@ def transform_technical_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         [   
             #translations
             pl.col("name").map_elements(json_decode, return_dtype=pl.Object),
-            pl.col("label").map_elements(json_decode, return_dtype=pl.Object),
+            pl.col("url").map_elements(json_decode, return_dtype=pl.Object),
+            pl.col("url").map_elements(json_decode, return_dtype=pl.Object).alias("label"),
     
             #booleans
             pl.col("is_consumable").cast(pl.Boolean),
@@ -80,8 +81,11 @@ def transform_technical_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("environments").map_elements(_parse_environments, return_dtype=pl.List(pl.Utf8)),
             
             #images
-            pl.col("picture")
+            pl.col("image")
               .map_elements(lambda x: file_to_image_obj(x, PICTURE_FOLDER) or {}, return_dtype=pl.Object),
+            #for lookup
+            pl.col("image")
+            .map_elements(lambda x: file_to_image_obj(x, PICTURE_FOLDER) or {}, return_dtype=pl.Object).alias("picture"),
             
             # Parse parent_ids from database into array
             pl.col("parent_ids").map_elements(_parse_parent_ids, return_dtype=pl.List(pl.Int32)),
@@ -99,7 +103,7 @@ def transform_technical_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     )
 
     # Build lookup for parent
-    lookup_df = lf.select(["id", "name", "label", "picture", "parent_id"]).collect()
+    lookup_df = lf.select(["id", "name", "label", "picture","parent_id"]).collect()
     lookup = {row["id"]: row for row in lookup_df.to_dicts()}
 
     lf = lf.with_columns(
@@ -109,7 +113,28 @@ def transform_technical_data(lf: pl.LazyFrame) -> pl.LazyFrame:
               .alias("parent"),
 
             pl.col("id").cast(pl.Utf8),
+
+
         ]
     )
+    lf = lf.select([
+        "id", 
+        "parent_id", 
+        "parent", 
+        "parent_ids", 
+        "environments", 
+        "name", 
+        "url",
+        "weight", 
+        "is_consumable", 
+        "is_accessory", 
+        "is_other", 
+        "packaging", 
+        "is_visible", 
+        "hs_code", 
+        "score", 
+        "image",
+        
+    ])
 
     return lf
