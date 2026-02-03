@@ -65,6 +65,8 @@ def product_schema(collection_name: str):
             #Machine characteristics
             {"name": "machine_characteristic", "type": "object[]", "index": False},
 
+            #Piece characteristics
+           {"name": "piece_characteristics","type": "object[]","index": False},
 
 
 

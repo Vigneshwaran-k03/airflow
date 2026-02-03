@@ -1,4 +1,4 @@
-from sqlalchemy import select, func, cast, String
+from sqlalchemy import select, func, cast, String, case
 from sqlalchemy.orm import aliased
 from models.products import (Product,
  D3E, 
@@ -19,6 +19,10 @@ from models.products import (Product,
  CharacteristicMachine,
  caracteristiques,
  units,
+ UnitsTypes,
+ characteristic_piece_value,
+ characteristic,
+ characteristic_enum
  UnitsTypes
  )
 from models.translation import Translate
@@ -43,6 +47,9 @@ def product_base_query(limit: int = None, offset: int = None):
 
     # Alias for Document Environment
     DocEnv = aliased(Environment, name="doc_env")
+
+    # Alias for enum translation
+    t_enum = aliased(Translate, name="t_enum")
 
     # Base price expression for pricing
     base_price_expr = func.coalesce(
@@ -291,6 +298,148 @@ def product_base_query(limit: int = None, offset: int = None):
 )
 
 
+    #piece_characteristics_subquery
+    piece_characteristics_subquery = (
+    select(
+        func.json_arrayagg(
+            func.json_object(
+                #id
+                "id", characteristic_piece_value.characteristic_id,
+                #context
+                "context", "piece",
+                #value
+                "value",
+                case(
+                    (
+                        characteristic.type == "boolean",
+                        characteristic_piece_value.boolean_value
+                    ),
+                    (
+                        characteristic.type == "enum",
+                        t_enum.fr
+                    ),
+                    else_=None
+                ),
+                #value_tr
+                "value_tr",
+                case(
+                    (
+                        characteristic.type == "enum",
+                        cast(func.json_object(*Translate.json_args(t_enum)), String)
+                    ),
+                    else_=None
+                ),
+                #min_value
+                "min_value",
+                case(
+                    (
+                        characteristic.type == "unit",
+                        characteristic_piece_value.min_value
+                    ),
+                    else_=None
+                ),
+                #max_value
+                "max_value",
+                case(
+                    (
+                        characteristic.type == "unit",
+                        characteristic_piece_value.max_value
+                    ),
+                    else_=None
+                ),
+
+                # ENVIRONMENT
+                "environment", Environment.label,
+
+                # IS EXCLUSION
+                "is_exclusion", characteristic_piece_value.environment_exclusion,
+            )
+        )
+    )
+    .select_from(characteristic_piece_value)
+    .join(
+        characteristic,
+        characteristic.id == characteristic_piece_value.characteristic_id
+    )
+    .outerjoin(
+        characteristic_enum,
+        characteristic_enum.id == characteristic_piece_value.enum_value_id
+    )
+    .outerjoin(
+        t_enum,
+        t_enum.id == characteristic_enum.value
+    )
+    .outerjoin(
+        Environment,
+        Environment.id == characteristic_piece_value.environment_id
+    )
+    .where(characteristic_piece_value.piece_id == Product.id)
+    .correlate(Product)
+    .scalar_subquery()
+)
+
+    #machine_characteristics_subquery
+    machine_characteristics_subquery = (
+    select(
+        func.json_arrayagg(
+            func.json_object(
+                "id", CharacteristicMachine.id_caracteristique,
+                "context", "machine",
+
+                #VALUE
+                "value",
+                func.if_(
+                    (UnitsTypes.is_boolean == True) |
+                    (UnitsTypes.is_text == True) |
+                    (UnitsTypes.is_enum == True),
+                    CharacteristicMachine.value,
+                    None
+                ),
+
+                # MIN
+                "min_value",
+                func.if_(
+                    (UnitsTypes.is_boolean == False) &
+                    (UnitsTypes.is_text == False) &
+                    (UnitsTypes.is_enum == False),
+                    CharacteristicMachine.value,
+                    None
+                ),
+
+                #MAX
+                "max_value",
+                func.if_(
+                    (UnitsTypes.is_boolean == False) &
+                    (UnitsTypes.is_text == False) &
+                    (UnitsTypes.is_enum == False),
+                    CharacteristicMachine.value,
+                    None
+                ),
+
+                "environment", func.coalesce(Environment.label, ""),
+                "is_exclusion", CharacteristicMachine.environment_exclusion,
+             )
+           )
+        )
+    .select_from(CharacteristicMachine)
+    .outerjoin(caracteristiques,
+        caracteristiques.id == CharacteristicMachine.id_caracteristique
+    )
+    .outerjoin(units,
+        units.id == caracteristiques.id_unit
+    )
+    .outerjoin(UnitsTypes,
+        UnitsTypes.id == units.id_type
+    )
+    .outerjoin(Environment,
+        Environment.id == CharacteristicMachine.environment_id
+    )
+    .where(CharacteristicMachine.id_produit == Product.id)
+    .correlate(Product)
+    .scalar_subquery()
+)
+
+
     # query
     stmt = select(
         Product.id,
@@ -419,6 +568,9 @@ def product_base_query(limit: int = None, offset: int = None):
 
         #Machine characteristics
         cast(machine_characteristics_subquery, String).label("machine_characteristic"),
+
+        #Piece characteristics
+        cast(piece_characteristics_subquery, String).label("piece_characteristics"),
 
 
 

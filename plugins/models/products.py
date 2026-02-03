@@ -300,4 +300,36 @@ class UnitsTypes(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     is_boolean = Column(Boolean, nullable=True)
     is_text = Column(Boolean, nullable=True)
+    is_enum = Column(Boolean, nullable=True)
+
+#characteristics for piece
+class characteristic_piece_value(Base):
+    __tablename__ = "characteristic_piece_value"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    piece_id = Column(Integer, nullable=True)
+    characteristic_id = Column(Integer, nullable=True)
+    min_value = Column(Float, nullable=True)
+    max_value = Column(Float, nullable=True)
+    boolean_value = Column(Boolean, nullable=True)
+    enum_value_id = Column(Integer, nullable=True)
+    environment_id = Column(Integer, nullable=True)
+    environment_exclusion = Column(Boolean, nullable=False, default=False)
+
+class characteristic_enum(Base):
+    __tablename__ = "characteristic_enum"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    characteristic_id = Column(Integer, nullable=True)
+    value = Column(Integer, nullable=True)
+
+
+class characteristic(Base):
+    __tablename__ = "characteristic"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    type = Column(String(45), nullable=True)
+
+
+   
     is_enum = Column(Boolean, nullable=True)	
