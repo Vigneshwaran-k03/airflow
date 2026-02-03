@@ -27,11 +27,11 @@ def technical_base_query(limit=None, offset=None):
             Technical.is_visible,
             Technical.hs_code,
             Technical.score,
-            Technical.img.label("picture"),
+            Technical.img.label("image"),
 
             # translations (JSON as STRING – flattened later)
             cast(func.json_object(*Translate.json_args(table=TrName)), String).label("name"),
-            cast(func.json_object(*Translate.json_args(table=TrLabel)), String).label("label"),
+            cast(func.json_object(*Translate.json_args(table=TrLabel)), String).label("url"),
         )
         .select_from(Technical)
         .outerjoin(TrName, TrName.id == Technical.nom)
