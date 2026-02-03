@@ -81,6 +81,7 @@ def _transform_documents(value):
     return data
 
 def _clean_characteristics(value):
+def _clean_machine_characteristics(value):
     data = _parse_json(value)
     if not data:
         return []
@@ -101,6 +102,7 @@ def _clean_characteristics(value):
             except Exception:
                 item["value_tr"] = None
                 
+        # Remove keys with None values
         item = {k: v for k, v in item.items() if v is not None}
 
         cleaned.append(item)
@@ -201,6 +203,7 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             #piece_characteristics
             pl.col("piece_characteristics").map_elements(_clean_characteristics, return_dtype=pl.Object),
 
+            pl.col("machine_characteristic").map_elements(_clean_machine_characteristics, return_dtype=pl.Object),
 
 
 
@@ -250,6 +253,7 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "stocks",
         "machine_characteristic",
         "piece_characteristics"
+        "machine_characteristic"
     ]
     
     lf = lf.select(final_cols)

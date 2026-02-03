@@ -332,3 +332,4 @@ class characteristic(Base):
 
 
    
+    is_enum = Column(Boolean, nullable=True)	

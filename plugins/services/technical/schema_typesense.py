@@ -9,6 +9,7 @@ def technical_schema(collection_name: str):
             {"name": "environments", "type": "string[]", "optional": True},
 
             {"name": "name", "type": "object"},
+            {"name": "url", "type": "object"},
             {"name": "label", "type": "object"},
 
             {"name": "weight", "type": "float"},
@@ -21,6 +22,7 @@ def technical_schema(collection_name: str):
             {"name": "hs_code", "type": "string", "optional": True},
             {"name": "score", "type": "int32"},
 
+            {"name": "image", "type": "object"},
             {"name": "picture", "type": "object"},
         ],
         "enable_nested_fields": True,
