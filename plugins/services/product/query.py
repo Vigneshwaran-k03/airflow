@@ -15,7 +15,12 @@ from models.products import (Product,
  EnvironmentProduct,
  tarifs,
  Stock,
- Depot)
+ Depot,
+ CharacteristicMachine,
+ caracteristiques,
+ units,
+ UnitsTypes
+ )
 from models.translation import Translate
 
 def product_base_query(limit: int = None, offset: int = None):
@@ -224,6 +229,67 @@ def product_base_query(limit: int = None, offset: int = None):
     .correlate(Product)
     .scalar_subquery()
     )
+    #machine_characteristics_subquery
+    machine_characteristics_subquery = (
+    select(
+        func.json_arrayagg(
+            func.json_object(
+                "id", CharacteristicMachine.id_caracteristique,
+                "context", "machine",
+
+                #VALUE
+                "value",
+                func.if_(
+                    (UnitsTypes.is_boolean == True) |
+                    (UnitsTypes.is_text == True) |
+                    (UnitsTypes.is_enum == True),
+                    CharacteristicMachine.value,
+                    None
+                ),
+
+                # MIN
+                "min_value",
+                func.if_(
+                    (UnitsTypes.is_boolean == False) &
+                    (UnitsTypes.is_text == False) &
+                    (UnitsTypes.is_enum == False),
+                    CharacteristicMachine.value,
+                    None
+                ),
+
+                #MAX
+                "max_value",
+                func.if_(
+                    (UnitsTypes.is_boolean == False) &
+                    (UnitsTypes.is_text == False) &
+                    (UnitsTypes.is_enum == False),
+                    CharacteristicMachine.value,
+                    None
+                ),
+
+                "environment", func.coalesce(Environment.label, ""),
+                "is_exclusion", CharacteristicMachine.environment_exclusion,
+             )
+           )
+        )
+    .select_from(CharacteristicMachine)
+    .outerjoin(caracteristiques,
+        caracteristiques.id == CharacteristicMachine.id_caracteristique
+    )
+    .outerjoin(units,
+        units.id == caracteristiques.id_unit
+    )
+    .outerjoin(UnitsTypes,
+        UnitsTypes.id == units.id_type
+    )
+    .outerjoin(Environment,
+        Environment.id == CharacteristicMachine.environment_id
+    )
+    .where(CharacteristicMachine.id_produit == Product.id)
+    .correlate(Product)
+    .scalar_subquery()
+)
+
 
     # query
     stmt = select(
@@ -350,6 +416,9 @@ def product_base_query(limit: int = None, offset: int = None):
 
         # Stocks
         cast(stocks_subquery, String).label("stocks"),
+
+        #Machine characteristics
+        cast(machine_characteristics_subquery, String).label("machine_characteristic"),
 
 
 

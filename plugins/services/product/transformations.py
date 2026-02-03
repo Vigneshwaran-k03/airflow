@@ -80,6 +80,23 @@ def _transform_documents(value):
                  pass
     return data
 
+def _clean_machine_characteristics(value):
+    data = _parse_json(value)
+    if not data:
+        return []
+
+    cleaned = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+
+        # Remove keys with None values
+        item = {k: v for k, v in item.items() if v is not None}
+
+        cleaned.append(item)
+
+    return cleaned
+
 
 def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     """
@@ -167,6 +184,10 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             #stocks
             pl.col("stocks").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
 
+            #machine_characteristics
+            pl.col("machine_characteristic").map_elements(_clean_machine_characteristics, return_dtype=pl.Object),
+
+
 
 
 
@@ -211,7 +232,8 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "documents",
         "environment",
         "pricing",
-        "stocks"
+        "stocks",
+        "machine_characteristic"
     ]
     
     lf = lf.select(final_cols)

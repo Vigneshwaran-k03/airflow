@@ -269,3 +269,35 @@ class Depot(Base):
     environment_id = Column(Integer, nullable=True)
     environment_exclusion = Column(Boolean, nullable=False, default=False)
     order = Column(Integer, nullable=True)
+
+#characteristic for machine
+
+class CharacteristicMachine(Base):
+    __tablename__ = "l_caracteristiques_produits"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_caracteristique = Column(Integer, nullable=True)
+    id_produit = Column(Integer, nullable=True)
+    value = Column(String(255), nullable=True)
+    environment_id = Column(Integer, nullable=True)
+    environment_exclusion = Column(Boolean, nullable=False, default=False)
+
+class caracteristiques(Base):
+    __tablename__ = "caracteristiques"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_unit = Column(Integer, nullable=True)
+
+class units(Base):
+    __tablename__ = "units"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_type = Column(Integer, nullable=True)
+
+class UnitsTypes(Base):
+    __tablename__ = "units_types"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    is_boolean = Column(Boolean, nullable=True)
+    is_text = Column(Boolean, nullable=True)
+    is_enum = Column(Boolean, nullable=True)	
