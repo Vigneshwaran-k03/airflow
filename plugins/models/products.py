@@ -197,22 +197,6 @@ class Machines_and_Pieces(Base):
     id_machine = Column(Integer, nullable=False)
     id_piece = Column(Integer, nullable=False)
 
-#characteristic for piece
-class CharacteristicPiece(Base):
-    __tablename__ = "characteristic_piece_value"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    piece_id = Column(Integer, nullable=True)
-    characteristic_id = Column(Integer, nullable=True)
-
-#characteristic for machine
-class CharacteristicMachine(Base):
-    __tablename__ = "l_caracteristiques_produits"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    id_produit = Column(Integer, nullable=True)
-    id_caracteristique = Column(Integer, nullable=True)
-
 #Packaging
 class Packaging(Base):
     __tablename__ = "f_produits_colisage"
@@ -260,3 +244,28 @@ class tarifs(Base):
     reduc = Column(Numeric(5,2), nullable=True)
     is_enabled = Column(Boolean, nullable=True)
 
+#stocks
+class Stock(Base):
+    __tablename__ = "l_depots_produits"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_depot = Column(Integer, nullable=False)
+    id_produit = Column(Integer, nullable=False)
+    stock_dispo = Column(Integer, nullable=False)
+    stock_physique = Column(Integer, nullable=False)
+    is_main = Column(Boolean, nullable=False)
+
+#Depots
+class Depot(Base):
+    __tablename__ = "depots"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    nom = Column(String(50), nullable=False)
+
+    min_value = Column(Float, nullable=True)
+    max_value = Column(Float, nullable=True)
+    boolean_value = Column(Boolean, nullable=True)
+    enum_value_id = Column(Integer, nullable=True)
+    environment_id = Column(Integer, nullable=True)
+    environment_exclusion = Column(Boolean, nullable=False, default=False)
+    order = Column(Integer, nullable=True)

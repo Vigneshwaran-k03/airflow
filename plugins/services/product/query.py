@@ -9,13 +9,13 @@ from models.products import (Product,
  ProductPiece,
  Machines_and_Pieces,
  PieceParts,
- CharacteristicPiece,
- CharacteristicMachine,
  Packaging,
  Document,
  DocumentType,
  EnvironmentProduct,
- tarifs)
+ tarifs,
+ Stock,
+ Depot)
 from models.translation import Translate
 
 def product_base_query(limit: int = None, offset: int = None):
@@ -129,21 +129,6 @@ def product_base_query(limit: int = None, offset: int = None):
         .correlate(Product)
         .scalar_subquery()
     )
-    # Subquery for machine characteristics
-    machine_characteristics_subquery = (
-        select(func.json_arrayagg(CharacteristicMachine.id_caracteristique))
-        .where(CharacteristicMachine.id_produit == Product.id)
-        .correlate(Product)
-        .scalar_subquery()
-    )
-    # Subquery for piece characteristics
-    piece_characteristics_subquery =(
-        select(func.json_arrayagg(CharacteristicPiece.characteristic_id))
-        .where(CharacteristicPiece.piece_id == Product.id_piece)
-        .correlate(Product)
-        .scalar_subquery()
-    )
-
     # Subquery for documents
     documents_subquery = (
         select(
@@ -207,6 +192,35 @@ def product_base_query(limit: int = None, offset: int = None):
         (tarifs.fin == None) | (tarifs.fin >= func.now())
     ).
     where(tarifs.is_enabled == 1)
+    .correlate(Product)
+    .scalar_subquery()
+    )
+
+    
+    #stocks_subquery
+    stocks_subquery = (
+       select(
+        func.json_arrayagg(
+            func.json_object(
+                "id", Stock.id,
+                "available_stock", Stock.stock_dispo,
+                "physical_stock", Stock.stock_physique,
+                "is_main", Stock.is_main,
+                "warehouse",
+                func.if_(
+                    (Stock.id_depot == 0) | (Depot.id == None),
+                    func.json_object(),
+                    func.json_object(
+                        "id", Depot.id,
+                        "name", Depot.nom
+                    )
+                )
+            )
+        )
+    )
+    .select_from(Stock)
+    .outerjoin(Depot, Stock.id_depot == Depot.id)
+    .where(Stock.id_produit == Product.id)
     .correlate(Product)
     .scalar_subquery()
     )
@@ -313,10 +327,6 @@ def product_base_query(limit: int = None, offset: int = None):
         cast(machines_from_piece_subquery, String).label("machines"),
         cast(parts_from_piece_subquery, String).label("parts"),
 
-        #Characteristics
-        cast(func.json_object("machine", machine_characteristics_subquery,
-        "piece", piece_characteristics_subquery),String).label("characteristics"),
-
         # Packaging
         cast(
             func.json_object(
@@ -338,6 +348,8 @@ def product_base_query(limit: int = None, offset: int = None):
         # Pricing
         cast(pricing_subquery, String).label("pricing"),
 
+        # Stocks
+        cast(stocks_subquery, String).label("stocks"),
 
 
 
