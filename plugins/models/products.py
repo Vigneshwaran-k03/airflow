@@ -269,3 +269,66 @@ class Depot(Base):
     environment_id = Column(Integer, nullable=True)
     environment_exclusion = Column(Boolean, nullable=False, default=False)
     order = Column(Integer, nullable=True)
+
+#characteristic for machine
+
+class CharacteristicMachine(Base):
+    __tablename__ = "l_caracteristiques_produits"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_caracteristique = Column(Integer, nullable=True)
+    id_produit = Column(Integer, nullable=True)
+    value = Column(String(255), nullable=True)
+    environment_id = Column(Integer, nullable=True)
+    environment_exclusion = Column(Boolean, nullable=False, default=False)
+
+class caracteristiques(Base):
+    __tablename__ = "caracteristiques"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_unit = Column(Integer, nullable=True)
+
+class units(Base):
+    __tablename__ = "units"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_type = Column(Integer, nullable=True)
+
+class UnitsTypes(Base):
+    __tablename__ = "units_types"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    is_boolean = Column(Boolean, nullable=True)
+    is_text = Column(Boolean, nullable=True)
+    is_enum = Column(Boolean, nullable=True)
+
+#characteristics for piece
+class characteristic_piece_value(Base):
+    __tablename__ = "characteristic_piece_value"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    piece_id = Column(Integer, nullable=True)
+    characteristic_id = Column(Integer, nullable=True)
+    min_value = Column(Float, nullable=True)
+    max_value = Column(Float, nullable=True)
+    boolean_value = Column(Boolean, nullable=True)
+    enum_value_id = Column(Integer, nullable=True)
+    environment_id = Column(Integer, nullable=True)
+    environment_exclusion = Column(Boolean, nullable=False, default=False)
+
+class characteristic_enum(Base):
+    __tablename__ = "characteristic_enum"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    characteristic_id = Column(Integer, nullable=True)
+    value = Column(Integer, nullable=True)
+
+
+class characteristic(Base):
+    __tablename__ = "characteristic"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    type = Column(String(45), nullable=True)
+
+
+   

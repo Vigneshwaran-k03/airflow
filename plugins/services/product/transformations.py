@@ -80,6 +80,34 @@ def _transform_documents(value):
                  pass
     return data
 
+def _clean_characteristics(value):
+    data = _parse_json(value)
+    if not data:
+        return []
+
+    cleaned = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+
+        if "value_tr" in item and isinstance(item["value_tr"], str):
+            try:
+                decoded = json_decode(item["value_tr"])
+                if isinstance(decoded, dict):
+                    item["value_tr"] = {
+                        k: (v if v is not None else "")
+                        for k, v in decoded.items()
+                    }
+            except Exception:
+                item["value_tr"] = None
+                
+        item = {k: v for k, v in item.items() if v is not None}
+
+        cleaned.append(item)
+
+    return cleaned
+
+
 
 def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     """
@@ -167,6 +195,14 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             #stocks
             pl.col("stocks").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
 
+            #machine_characteristics
+            pl.col("machine_characteristic").map_elements(_clean_characteristics, return_dtype=pl.Object),
+
+            #piece_characteristics
+            pl.col("piece_characteristics").map_elements(_clean_characteristics, return_dtype=pl.Object),
+
+
+
 
 
 
@@ -211,7 +247,9 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "documents",
         "environment",
         "pricing",
-        "stocks"
+        "stocks",
+        "machine_characteristic",
+        "piece_characteristics"
     ]
     
     lf = lf.select(final_cols)
