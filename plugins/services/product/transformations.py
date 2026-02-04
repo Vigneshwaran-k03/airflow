@@ -250,7 +250,6 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "stocks",
         "machine_characteristic",
         "piece_characteristics"
-        "machine_characteristic"
     ]
     
     lf = lf.select(final_cols)
