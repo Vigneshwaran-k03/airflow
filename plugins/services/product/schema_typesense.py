@@ -68,6 +68,24 @@ def product_schema(collection_name: str):
             #Piece characteristics
            {"name": "piece_characteristics","type": "object[]","index": False},
 
+            #Suppliers
+            {"name": "suppliers", "type": "object[]", "index": False},
+
+            #In Stock
+            {"name": "in_stock", "type": "bool", "index": False},
+
+            #Resupplies
+            {"name": "resupplies", "type": "object[]", "index": False},
+
+            #Images
+            {"name": "images", "type": "object[]", "index": False},
+
+            # Accessories
+            {"name": "accessories", "type": "int32[]", "index": False},
+
+            # Alternatives
+            {"name": "alternatives", "type": "int32[]", "index": False},
+
 
 
 

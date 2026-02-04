@@ -23,7 +23,15 @@ from models.products import (Product,
  characteristic_piece_value,
  characteristic,
  characteristic_enum,
- UnitsTypes
+ UnitsTypes,
+ suppliers,
+ ot_links,
+ ot_colis,
+ ot_commandes,
+ ot_commandes,
+ Images,
+ Accessories,
+ Alternatives
  )
 from models.translation import Translate
 
@@ -117,7 +125,7 @@ def product_base_query(limit: int = None, offset: int = None):
     .where(Category.product_id == Product.id)
     .correlate(Product)
     .scalar_subquery()
-)    
+    )    
     # Subquery for pieces
     pieces_from_machine_subquery = (
         select(func.json_arrayagg(Machines_and_Pieces.id_piece))
@@ -248,24 +256,14 @@ def product_base_query(limit: int = None, offset: int = None):
                 "context", "piece",
                 #value
                 "value",
-                case(
-                    (
-                        characteristic.type == "boolean",
-                        characteristic_piece_value.boolean_value
-                    ),
-                    (
-                        characteristic.type == "enum",
-                        t_enum.fr
-                    ),
+                case((characteristic.type == "boolean",characteristic_piece_value.boolean_value),
+                    (characteristic.type == "enum",t_enum.fr),
                     else_=None
                 ),
                 #value_tr
                 "value_tr",
                 case(
-                    (
-                        characteristic.type == "enum",
-                        cast(func.json_object(*Translate.json_args(t_enum)), String)
-                    ),
+                    (characteristic.type == "enum",cast(func.json_object(*Translate.json_args(t_enum)), String)),
                     else_=None
                 ),
                 #min_value
@@ -315,7 +313,30 @@ def product_base_query(limit: int = None, offset: int = None):
     .where(characteristic_piece_value.piece_id == Product.id)
     .correlate(Product)
     .scalar_subquery()
-)
+    )
+
+    #suppliers_subquery
+    suppliers_subquery = (
+        select(
+            func.json_arrayagg(
+                func.json_object(
+                    "id", suppliers.id,
+                    "supplier_id", suppliers.id_fournisseur,
+                    "product_id", suppliers.id_piece,
+                    "supplier_reference", suppliers.ref_usine,
+                    "buying_price_usd", suppliers.prix_achat,
+                    "exchange_rate", suppliers.taux_change,
+                    "currency_id", suppliers.id_devise,
+                    "buying_price", suppliers.prix_origine,
+                    "update_date", suppliers.date
+                )
+            )
+        )
+        .select_from(suppliers)
+        .where(suppliers.id_piece == Product.id)
+        .correlate(Product)
+        .scalar_subquery()
+    )
 
     #machine_characteristics_subquery
     machine_characteristics_subquery = (
@@ -376,10 +397,121 @@ def product_base_query(limit: int = None, offset: int = None):
     .where(CharacteristicMachine.id_produit == Product.id)
     .correlate(Product)
     .scalar_subquery()
-)
+    )
+
+
+    # Resupplies subquery
+    resupplies_subquery = (
+    select(func.coalesce(func.sum(ot_links.qte), 0))
+    .select_from(ot_links)
+    .join(ot_colis, ot_links.id_colis == ot_colis.id)
+    .join(ot_commandes, ot_commandes.id == ot_colis.id_commande)
+    .join(Depot, (Depot.id == ot_colis.id_depot) & (Depot.id_societe == 1))
+    .where(
+        (ot_links.id_piece == Product.id) &
+        (ot_colis.is_shipping == False) &
+        (ot_commandes.is_removed == False)
+    )
+    .correlate(Product)
+    .scalar_subquery()
+    )
+
+    # Main stock subquery
+    main_stock_subquery = (
+    select(func.coalesce(func.sum(Stock.stock_dispo), 0))
+    .where(
+        (Stock.id_produit == Product.id) &
+        (Stock.is_main == True)
+    )
+    .correlate(Product)
+    .scalar_subquery()
+    )
+
+    # In Stock Logic
+    in_stock_expr = case(
+    (
+        (Product.is_obsolete == 0) &
+        (ProductPiece.forcedSale > 0),
+        True
+    ),
+    (main_stock_subquery > 0, True),
+    (resupplies_subquery > 0, True),
+    else_=False,
+    )
+
+    # Resupplies detailed subquery (for product collection)
+    resupplies_details_subquery = (
+    select(
+        func.coalesce(
+            func.json_arrayagg(
+                func.json_object(
+                    "piece_order_id", ot_commandes.id,
+                    "warehouse_id", ot_colis.id_depot,
+                    "qty", ot_links.qte
+                )
+            ),
+            func.json_array()
+        )
+    )
+    .select_from(ot_links)
+    .join(ot_colis, ot_links.id_colis == ot_colis.id)
+    .join(ot_commandes, ot_commandes.id == ot_colis.id_commande)
+    .join(
+        Depot,
+        (Depot.id == ot_colis.id_depot) &
+        (Depot.id_societe == 1)
+    )
+    .where(
+        (ot_links.id_piece == Product.id) &
+        (ot_colis.is_shipping == False) &
+        (ot_commandes.is_removed == False)
+    )
+    .correlate(Product)
+    .scalar_subquery()
+    )
+
+
+    # Images subquery
+    images_subquery = (
+        select(
+            func.json_arrayagg(
+                func.json_object(
+                    "id", Images.id,
+                    "language_id", Images.id_langue,
+                    "title", Images.titre,
+                    "file", Images.img,
+                    "type", Images.type, 
+                    "environment", Environment.label,             
+                )
+            )
+        )
+        .select_from(Images)
+        .outerjoin(Environment, Images.environment_id == Environment.id)
+        .where(Images.id_produit == Product.id)
+        .correlate(Product)
+        .scalar_subquery()
+    )
+
+    # Accessories subquery
+    accessories_subquery = (
+        select(func.json_arrayagg(Accessories.id_accessoire))
+        .where(Accessories.id_machine == Product.id)
+        .correlate(Product)
+        .scalar_subquery()
+    )
+
+    # Alternatives subquery
+    alternatives_subquery = (
+        select(func.json_arrayagg(Alternatives.id_compatible))
+        .where(Alternatives.id_produit == Product.id)
+        .correlate(Product)
+        .scalar_subquery()
+    )
+
 
 
     # query
+
     stmt = select(
         Product.id,
         Product.type,
@@ -510,6 +642,25 @@ def product_base_query(limit: int = None, offset: int = None):
 
         #Piece characteristics
         cast(piece_characteristics_subquery, String).label("piece_characteristics"),
+
+        #suppliers
+        cast(suppliers_subquery, String).label("suppliers"),
+
+
+        # in_stock
+        in_stock_expr.label("in_stock"),
+
+        # Resupplies detailed
+        cast(resupplies_details_subquery, String).label("resupplies"),
+
+        # Images
+        cast(images_subquery, String).label("images"),
+
+        # Accessories
+        cast(accessories_subquery, String).label("accessories"),
+
+        # Alternatives
+        cast(alternatives_subquery, String).label("alternatives"),
 
 
 
