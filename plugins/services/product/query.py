@@ -22,7 +22,7 @@ from models.products import (Product,
  UnitsTypes,
  characteristic_piece_value,
  characteristic,
- characteristic_enum
+ characteristic_enum,
  UnitsTypes
  )
 from models.translation import Translate
