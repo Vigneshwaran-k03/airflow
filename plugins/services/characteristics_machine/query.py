@@ -2,6 +2,7 @@ from sqlalchemy import select, func, cast, String, case
 from sqlalchemy.orm import aliased
 from models.characteristics_machine import CharacteristicMachine, CharacteristicProduct, Unit, UnitType
 from models.translation import Translate
+from models.products import Product
 
 def characteristics_machine_base_query(limit: int = None, offset: int = None):
     # Aliases for translation tables
@@ -11,6 +12,7 @@ def characteristics_machine_base_query(limit: int = None, offset: int = None):
     # Subquery for product_ids
     products_ids_subquery = (
         select(func.json_arrayagg(CharacteristicProduct.id_produit))
+        .join(Product, CharacteristicProduct.id_produit == Product.id)
         .where(CharacteristicProduct.id_caracteristique == CharacteristicMachine.id)
         .correlate(CharacteristicMachine)
         .scalar_subquery()
