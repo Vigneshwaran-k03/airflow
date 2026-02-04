@@ -2,6 +2,7 @@ import polars as pl
 from helpers.file_to_img_obj import file_to_image_obj
 from helpers.jsonString_json import json_decode
 from helpers.product_extensions_transform import _transform_extensions
+from services.pricing.transformations import build_datetime_object
 import json
 
 PHOTO_FOLDER = "photos"
@@ -108,6 +109,39 @@ def _clean_characteristics(value):
 
     return cleaned
 
+def _transform_suppliers(value):
+    data = _parse_json(value)
+    if not data:
+        return []
+
+    if isinstance(data, list):
+        for item in data:
+            if isinstance(item, dict):
+                 # Transform date
+                if "update_date" in item:
+                    item["update_date"] = build_datetime_object(item["update_date"])
+                
+                # Ensure fields are present as per user request (though query handles most)
+                # But JSON from SQL might have nulls where we want specific defaults? 
+                # User didn't specify defaults effectively, but let's trust SQL for now.
+                pass
+    return data
+
+def _transform_images(value):
+    data = _parse_json(value)
+    if not data:
+        return []
+
+    if isinstance(data, list):
+        for item in data:
+            if isinstance(item, dict):
+                # Transform file path to image object
+                if "file" in item and item["file"]:
+                     item["file"] = file_to_image_obj(item["file"], PHOTO_FOLDER) or {}
+                else:
+                    item["file"] = {} # ensure empty object if no file
+
+    return data
 
 
 def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -202,9 +236,23 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             #piece_characteristics
             pl.col("piece_characteristics").map_elements(_clean_characteristics, return_dtype=pl.Object),
 
+            #suppliers
+            pl.col("suppliers").map_elements(_transform_suppliers, return_dtype=pl.Object),
 
+            # in_stock
+            pl.col("in_stock").cast(pl.Boolean).fill_null(False),
 
+            # resupplies
+            pl.col("resupplies").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
 
+            # images
+            pl.col("images").map_elements(_transform_images, return_dtype=pl.Object),
+
+            # accessories
+            pl.col("accessories").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
+
+            # alternatives
+            pl.col("alternatives").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
 
         ]
     )
@@ -249,7 +297,13 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "pricing",
         "stocks",
         "machine_characteristic",
-        "piece_characteristics"
+        "piece_characteristics",
+        "suppliers",
+        "in_stock",
+        "resupplies",
+        "images",
+        "accessories",
+        "alternatives"
     ]
     
     lf = lf.select(final_cols)

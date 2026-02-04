@@ -255,13 +255,37 @@ class Stock(Base):
     stock_physique = Column(Integer, nullable=False)
     is_main = Column(Boolean, nullable=False)
 
+class ot_links(Base):
+    __tablename__ = "ot_links"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_piece = Column(Integer, nullable=False)
+    id_colis = Column(Integer, nullable=False)
+    qte = Column(Integer, nullable=False)
+    qte_litige = Column(Integer, nullable=False)
+
+class ot_commandes(Base):
+    __tablename__ = "ot_commandes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    is_removed = Column(Boolean, nullable=False)
+
+class ot_colis(Base):
+    __tablename__ = "ot_colis"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_commande = Column(Integer, nullable=False)
+    id_depot = Column(Integer, nullable=False)
+    is_shipping = Column(Boolean, nullable=False)
+
 #Depots
 class Depot(Base):
     __tablename__ = "depots"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     nom = Column(String(50), nullable=False)
-
+    id_supplier = Column(Integer, nullable=True)
+    id_societe = Column(Integer, nullable=True)
     min_value = Column(Float, nullable=True)
     max_value = Column(Float, nullable=True)
     boolean_value = Column(Boolean, nullable=True)
@@ -329,7 +353,48 @@ class characteristic(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     type = Column(String(45), nullable=True)
-
-
-   
     is_enum = Column(Boolean, nullable=True)	
+
+#suppliers
+class suppliers(Base):
+    __tablename__ = "l_fournisseurs_pieces"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_fournisseur = Column(Integer, nullable=True)
+    id_piece = Column(Integer, nullable=True)
+    ref_usine = Column(String(255), nullable=True)
+    prix_achat = Column(Numeric(10,2), nullable=True)
+    taux_change = Column(Float, nullable=True)
+    id_devise = Column(Integer, nullable=True)
+    prix_origine = Column(Numeric(10,2), nullable=True)
+    date = Column(Date, nullable=True)
+
+#images 
+class Images(Base):
+    __tablename__ = "produits_images"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_produit = Column(Integer, nullable=True)
+    id_langue = Column(String(2), nullable=True)
+    titre = Column(String(150), nullable=True)
+    img = Column(String(150), nullable=True)
+    type = Column(Integer, nullable=True)
+    environment_id = Column(Integer, nullable=True) 
+    
+#Accessories
+class Accessories(Base):
+    __tablename__ = "l_accessoires_machines"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_accessoire = Column(Integer, nullable=True)
+    id_machine = Column(Integer, nullable=True)
+
+#Alternatives
+class Alternatives(Base):
+    __tablename__ = "f_produits_piece_compatibles"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_produit = Column(Integer, nullable=True)
+    id_compatible = Column(Integer, nullable=True)
+
+    
