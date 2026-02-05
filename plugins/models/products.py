@@ -396,5 +396,4 @@ class Alternatives(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     id_produit = Column(Integer, nullable=True)
     id_compatible = Column(Integer, nullable=True)
-
-    
+  
