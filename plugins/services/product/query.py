@@ -31,7 +31,9 @@ from models.products import (Product,
  ot_commandes,
  Images,
  Accessories,
- Alternatives
+ Accessories,
+ Alternatives,
+ Videos
  )
 from models.translation import Translate
 
@@ -58,6 +60,9 @@ def product_base_query(limit: int = None, offset: int = None):
 
     # Alias for enum translation
     t_enum = aliased(Translate, name="t_enum")
+
+    # Alias for Video Title Translation
+    t_video_title = aliased(Translate, name="t_video_title")
 
     # Base price expression for pricing
     base_price_expr = func.coalesce(
@@ -521,10 +526,39 @@ def product_base_query(limit: int = None, offset: int = None):
         .scalar_subquery()
     )
 
+    # Videos subquery
+    videos_subquery = (
+        select(
+            func.coalesce(
+                func.json_arrayagg(
+                    func.json_object(
+                        "id", Videos.id,
+                        "title", cast(func.json_object(*Translate.json_args(t_video_title)), String),
+                        "url", Videos.url,
+                        "order", Videos.order,
+                        "environment", Environment.label
+                    )
+                ),
+                func.json_array()
+            )
+        )
+        .select_from(Videos)
+        .outerjoin(Environment, Videos.environment_id == Environment.id)
+        .outerjoin(t_video_title, Videos.title == t_video_title.id)
+        .where(
+            (Videos.targetId == Product.id) & 
+            (Videos.targetTable == 'produits')
+        )
+        .correlate(Product)
+        .scalar_subquery()
+    )
+
     # query
 
     stmt = select(
         Product.id,
+        Product.id_machine,
+        Product.id_piece,
         Product.type,
         Product.code_douane.label('customs_code'),
         Product.ref,
@@ -548,6 +582,9 @@ def product_base_query(limit: int = None, offset: int = None):
         Product.img.label('image'),
         
         Product.hscode.label('hs_code'),
+
+        # Original Product ID
+        Product.id_produit_origine.label('original_product_id'),
 
         #brand
         Product.id_marque.label('brand'),
@@ -672,6 +709,9 @@ def product_base_query(limit: int = None, offset: int = None):
 
         # Alternatives
         cast(alternatives_subquery, String).label("alternatives"),
+
+        # Videos
+        cast(videos_subquery, String).label("videos"),
 
 
 

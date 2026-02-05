@@ -30,6 +30,7 @@ def product_schema(collection_name: str):
 
             # Image (Object)
             {"name": "image", "type": "object", "index": False},
+            {"name": "best_image", "type": "object", "index": False},
 
             #d3e,machine and piece
             {"name": "d3e", "type": "object","index":False },
@@ -85,6 +86,15 @@ def product_schema(collection_name: str):
 
             # Alternatives
             {"name": "alternatives", "type": "int32[]", "index": False},
+
+            # Videos
+            {"name": "videos", "type": "object[]", "index": False},
+
+            # Refurbished
+            {"name": "refurbished", "type": "object", "index": False,},
+
+            # Best Brand
+            {"name": "best_brand", "type": "string", "index": False,},
 
 
 

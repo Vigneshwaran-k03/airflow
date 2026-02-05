@@ -395,5 +395,19 @@ class Alternatives(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     id_produit = Column(Integer, nullable=True)
-    id_compatible = Column(Integer, nullable=True)
-  
+    id_compatible = Column(Integer, nullable=True)  
+
+#Videos
+
+class Videos(Base):
+    __tablename__ = "website__video"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    targetTable = Column(String(50), nullable=False)
+    targetId = Column(Integer, nullable=False)
+    title = Column(Integer, nullable=False)
+    url = Column(String(255), nullable=False)
+    environment_id = Column(Integer, nullable=False)
+    order = Column(Integer, nullable=True)
+
+   
