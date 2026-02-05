@@ -474,15 +474,18 @@ def product_base_query(limit: int = None, offset: int = None):
     # Images subquery
     images_subquery = (
         select(
-            func.json_arrayagg(
-                func.json_object(
-                    "id", Images.id,
-                    "language_id", Images.id_langue,
-                    "title", Images.titre,
-                    "file", Images.img,
-                    "type", Images.type, 
-                    "environment", Environment.label,             
-                )
+            func.coalesce(
+                func.json_arrayagg(
+                    func.json_object(
+                        "id", Images.id,
+                        "language_id", Images.id_langue,
+                        "title", Images.titre,
+                        "file", Images.img,
+                        "type", Images.type, 
+                        "environment", Environment.label,             
+                    )
+                ),
+                func.json_array()
             )
         )
         .select_from(Images)
@@ -494,7 +497,12 @@ def product_base_query(limit: int = None, offset: int = None):
 
     # Accessories subquery
     accessories_subquery = (
-        select(func.json_arrayagg(Accessories.id_accessoire))
+        select(
+            func.coalesce(
+                func.json_arrayagg(Accessories.id_accessoire),
+                func.json_array()
+            )
+        )
         .where(Accessories.id_machine == Product.id)
         .correlate(Product)
         .scalar_subquery()
@@ -502,13 +510,16 @@ def product_base_query(limit: int = None, offset: int = None):
 
     # Alternatives subquery
     alternatives_subquery = (
-        select(func.json_arrayagg(Alternatives.id_compatible))
+        select(
+            func.coalesce(
+                func.json_arrayagg(Alternatives.id_compatible),
+                func.json_array()
+            )
+        )
         .where(Alternatives.id_produit == Product.id)
         .correlate(Product)
         .scalar_subquery()
     )
-
-
 
     # query
 
