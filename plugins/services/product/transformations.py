@@ -144,6 +144,61 @@ def _transform_images(value):
     return data
 
 
+def _transform_videos(value):
+    data = _parse_json(value)
+    if not data:
+        return []
+
+    cleaned = []
+    if isinstance(data, list):
+        for item in data:
+            if isinstance(item, dict):
+                # Process title translation if it exists
+                if "title" in item and isinstance(item["title"], str):
+                    try:
+                        decoded = json_decode(item["title"])
+                        if isinstance(decoded, dict):
+                            item["title"] = {
+                                k: (v if v is not None else "")
+                                for k, v in decoded.items()
+                            }
+                    except Exception:
+                        item["title"] = None
+                
+                # Replace None with "" for all other fields
+                item = {k: (v if v is not None else "") for k, v in item.items()}
+                cleaned.append(item)
+    
+    return cleaned
+
+
+def _transform_refurbished(data):
+    if not data:
+        return None
+    
+    id_machine = data.get("id_machine") or 0
+    id_piece = data.get("id_piece") or 0
+    
+    if id_machine > 0 and id_piece > 0:
+        ref = data.get("ref") or ""
+        # Check first letter
+        first_char = ref[0] if ref else ""
+        grade = " "
+        if first_char in ['X', 'Y', 'Z', 'R']:
+            grade = first_char
+        
+        original_product = data.get("original_product_id")
+        if original_product is None:
+            original_product = ""
+            
+        return {
+            "grade": grade,
+            "original_product": original_product
+        }
+    
+    return None
+
+
 def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
     """
     Apply transformations to Product data.
@@ -178,9 +233,15 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("hs_code").cast(pl.Utf8).fill_null(""),
 
             #type
-            pl.when(pl.col("type") == "KIT")
+            pl.when((pl.col("id_machine").cast(pl.Int64) > 0) & (pl.col("id_piece").cast(pl.Int64) == 0))
+            .then(pl.lit("machine"))
+            .when((pl.col("id_machine").cast(pl.Int64) == 0) & (pl.col("id_piece").cast(pl.Int64) > 0))
             .then(pl.lit("piece"))
-            .otherwise(pl.col("type"))
+            .when((pl.col("id_machine").cast(pl.Int64) > 0) & (pl.col("id_piece").cast(pl.Int64) > 0))
+            .then(pl.lit("refurbished"))
+            .otherwise(
+                pl.col("type").str.to_lowercase()
+            )
             .cast(pl.Utf8)
             .fill_null("")
             .alias("type"),
@@ -200,8 +261,12 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("image")
             .map_elements(
                 lambda x: file_to_image_obj(x, PHOTO_FOLDER) or {}, return_dtype=pl.Object
-            )
-            .alias("image"),
+            ),
+            
+            pl.col("image")
+            .map_elements(
+                lambda x: file_to_image_obj(x, PHOTO_FOLDER) or {}, return_dtype=pl.Object
+            ).alias("best_image"),
 
             # EXTENSIONS
             pl.col("extensions")
@@ -254,6 +319,30 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             # alternatives
             pl.col("alternatives").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
 
+    # videos
+            pl.col("videos").map_elements(_transform_videos, return_dtype=pl.Object),
+
+            # refurbished
+            pl.struct(["id_machine", "id_piece", "ref", "original_product_id"])
+            .map_elements(_transform_refurbished, return_dtype=pl.Object)
+            .alias("refurbished"),
+
+            # best_brand
+            pl.lit("", dtype=pl.Utf8).alias("best_brand"),
+
+            # aliases
+            pl.col("aliases").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
+            
+            # search_aliases
+            pl.col("aliases")
+            .map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object)
+            .map_elements(
+                lambda aliases: " ".join([a.get("alias", "") for a in aliases if isinstance(a, dict) and a.get("alias")]),
+                return_dtype=pl.Utf8
+            )
+            .fill_null(" ")
+            .alias("search_aliases"),
+
         ]
     )
 
@@ -277,6 +366,7 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "is_visible", 
         "is_obsolete", 
         "image", 
+        "best_image",
         "hs_code", 
         "meta_title", 
         "meta_description", 
@@ -303,7 +393,12 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "resupplies",
         "images",
         "accessories",
-        "alternatives"
+        "alternatives",
+        "videos",
+        "refurbished",
+        "best_brand",
+        "aliases",
+        "search_aliases"
     ]
     
     lf = lf.select(final_cols)

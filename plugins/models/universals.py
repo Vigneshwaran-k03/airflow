@@ -8,6 +8,7 @@ class Universal(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     id_parent = Column(Integer)
+    id_d3e = Column(Integer)
     
     # Translation Foreign Keys
     tr_nom = Column(Integer)

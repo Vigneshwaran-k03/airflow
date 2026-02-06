@@ -31,9 +31,16 @@ from models.products import (Product,
  ot_commandes,
  Images,
  Accessories,
- Alternatives
+ Accessories,
+ Alternatives,
+ Videos,
+ Alias,
+ AliasCategories,
+ EnvironmentProductField,
+ EnvironmentProductImage
  )
 from models.translation import Translate
+from models.universals import Universal
 
 def product_base_query(limit: int = None, offset: int = None):
     # Aliases for Translation Joins (Main Product)
@@ -58,6 +65,14 @@ def product_base_query(limit: int = None, offset: int = None):
 
     # Alias for enum translation
     t_enum = aliased(Translate, name="t_enum")
+
+    # Alias for Video Title Translation
+    t_video_title = aliased(Translate, name="t_video_title")
+
+    # Aliases for D3E logic
+    d3e_direct = aliased(D3E, name="d3e_direct")
+    d3e_fallback = aliased(D3E, name="d3e_fallback")
+    universal_fallback = aliased(Universal, name="universal_fallback")
 
     # Base price expression for pricing
     base_price_expr = func.coalesce(
@@ -99,7 +114,24 @@ def product_base_query(limit: int = None, offset: int = None):
                         "original_references", cast(func.json_object(*Translate.json_args(t_ext_orig_refs)), String),
 
                         # Calculated info needed for logic (like Tax Rate)
-                         "tax_rate", Environment.tax_rate
+                         "tax_rate", Environment.tax_rate,
+
+                        "custom_fields", func.coalesce(
+                            select(func.json_objectagg(EnvironmentProductField.name, EnvironmentProductField.value))
+                            .where(EnvironmentProductField.product_id == LEnvironmentProduct.product_id)
+                            .where(EnvironmentProductField.environment_id == LEnvironmentProduct.environment_id)
+                            .correlate(LEnvironmentProduct)
+                            .scalar_subquery(),
+                            func.json_object()
+                        ),
+                        "images", func.coalesce(
+                            select(func.json_arrayagg(EnvironmentProductImage.image_id))
+                            .where(EnvironmentProductImage.product_id == LEnvironmentProduct.product_id)
+                            .where(EnvironmentProductImage.environment_id == LEnvironmentProduct.environment_id)
+                            .correlate(LEnvironmentProduct)
+                            .scalar_subquery(),
+                            func.json_array()
+                        )
                     )
                 )
             )
@@ -521,10 +553,59 @@ def product_base_query(limit: int = None, offset: int = None):
         .scalar_subquery()
     )
 
+    # Videos subquery
+    videos_subquery = (
+        select(
+            func.coalesce(
+                func.json_arrayagg(
+                    func.json_object(
+                        "id", Videos.id,
+                        "title", cast(func.json_object(*Translate.json_args(t_video_title)), String),
+                        "url", Videos.url,
+                        "order", Videos.order,
+                        "environment", Environment.label
+                    )
+                ),
+                func.json_array()
+            )
+        )
+        .select_from(Videos)
+        .outerjoin(Environment, Videos.environment_id == Environment.id)
+        .outerjoin(t_video_title, Videos.title == t_video_title.id)
+        .where(
+            (Videos.targetId == Product.id) & 
+            (Videos.targetTable == 'produits')
+        )
+        .correlate(Product)
+        .scalar_subquery()
+    )
+
+    # Aliases subquery
+    aliases_subquery = (
+        select(
+            func.coalesce(
+                func.json_arrayagg(
+                    func.json_object(
+                        "alias", Alias.alias,
+                        "category", AliasCategories.nom
+                    )
+                ),
+                func.json_array()
+            )
+        )
+        .select_from(Alias)
+        .outerjoin(AliasCategories, Alias.id_categorie == AliasCategories.id)
+        .where(Alias.id_produit == Product.id)
+        .correlate(Product)
+        .scalar_subquery()
+    )
+
     # query
 
     stmt = select(
         Product.id,
+        Product.id_machine,
+        Product.id_piece,
         Product.type,
         Product.code_douane.label('customs_code'),
         Product.ref,
@@ -549,6 +630,9 @@ def product_base_query(limit: int = None, offset: int = None):
         
         Product.hscode.label('hs_code'),
 
+        # Original Product ID
+        Product.id_produit_origine.label('original_product_id'),
+
         #brand
         Product.id_marque.label('brand'),
         
@@ -565,13 +649,24 @@ def product_base_query(limit: int = None, offset: int = None):
         Product.swapUrl.label('url'),
 
         #d3e
-        cast(
-        func.json_object(
-        "id", D3E.id,
-        "company_id", D3E.id_societe,
-        "name", D3E.nom,
-        "price", D3E.prix
-        ), String
+        func.if_(
+            Product.id_d3e != 0,
+            cast(
+                func.json_object(
+                    "id", d3e_direct.id,
+                    "company_id", d3e_direct.id_societe,
+                    "name", d3e_direct.nom,
+                    "price", d3e_direct.prix
+                ), String
+            ),
+            cast(
+                func.json_object(
+                    "id", d3e_fallback.id,
+                    "company_id", d3e_fallback.id_societe,
+                    "name", d3e_fallback.nom,
+                    "price", d3e_fallback.prix
+                ), String
+            )
         ).label("d3e"),
 
         #Machine
@@ -673,6 +768,12 @@ def product_base_query(limit: int = None, offset: int = None):
         # Alternatives
         cast(alternatives_subquery, String).label("alternatives"),
 
+        # Videos
+        cast(videos_subquery, String).label("videos"),
+
+        # Aliases
+        cast(aliases_subquery, String).label("aliases"),
+
 
 
     ).select_from(Product)
@@ -684,8 +785,12 @@ def product_base_query(limit: int = None, offset: int = None):
     stmt = stmt.outerjoin(t_meta_title, Product.generated_meta_title == t_meta_title.id)
     stmt = stmt.outerjoin(t_meta_desc, Product.generated_meta_description == t_meta_desc.id)
     stmt = stmt.outerjoin(t_orig_refs, Product.generated_original_references == t_orig_refs.id)
-    stmt = stmt.outerjoin(D3E, Product.id_d3e == D3E.id)
+    
+    # D3E Joins
+    stmt = stmt.outerjoin(d3e_direct, Product.id_d3e == d3e_direct.id)
     stmt = stmt.outerjoin(ProductMachine, Product.id_machine == ProductMachine.id)
+    stmt = stmt.outerjoin(universal_fallback, ProductMachine.id_arborescence == universal_fallback.id)
+    stmt = stmt.outerjoin(d3e_fallback, universal_fallback.id_d3e == d3e_fallback.id)
     stmt = stmt.outerjoin(ProductPiece, Product.id_piece == ProductPiece.id)
     stmt = stmt.outerjoin(Packaging, Product.id == Packaging.id_produit)
    
