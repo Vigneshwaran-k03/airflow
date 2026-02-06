@@ -98,7 +98,7 @@ def product_schema(collection_name: str):
 
             # Aliases
             {"name": "aliases", "type": "object[]", "index": False},
-            {"name": "search_aliases", "type": "string", "index": False},
+            {"name": "search_aliases", "type": "string", "index": True},
 
 
 
