@@ -3,7 +3,7 @@ def product_schema(collection_name: str):
         "name": collection_name,
         "fields": [
             # ID
-            {"name": "id", "type": "string", "index": True},
+            {"name": "id", "type": "string"},
             
             # Basic Fields
             {"name": "type", "type": "string", "index": False},
@@ -20,10 +20,10 @@ def product_schema(collection_name: str):
             {"name": "is_obsolete", "type": "bool", "index": False},
 
             # Translations (Objects)
-            {"name": "name", "type": "object", "index": True},
+            {"name": "name", "type": "object"},
             {"name": "short_description", "type": "object", "index": False},
             {"name": "long_description", "type": "object", "index": False},
-            {"name": "meta_title", "type": "object", "index": True},
+            {"name": "meta_title", "type": "object"},
             {"name": "meta_description", "type": "object", "index": False},
             {"name": "original_references", "type": "object", "index": False},
             {"name": "url", "type": "string", "optional": True, "index": False},
@@ -98,7 +98,7 @@ def product_schema(collection_name: str):
 
             # Aliases
             {"name": "aliases", "type": "object[]", "index": False},
-            {"name": "search_aliases", "type": "string", "index": False},
+            {"name": "search_aliases", "type": "string"},
 
 
 
