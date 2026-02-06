@@ -14,7 +14,7 @@ def characteristics_machine_schema(collection_name: str) -> dict:
             {"name": "symbol", "type": "string"},
             
             # Arrays (Lists)
-            {"name": "product_ids", "type": "string[]"},
+            {"name": "product_ids", "type": "string[]","reference": "products.id"},
             
             # Translation objects
             {"name": "name", "type": "object"},
