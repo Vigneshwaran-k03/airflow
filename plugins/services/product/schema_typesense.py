@@ -16,7 +16,7 @@ def product_schema(collection_name: str):
             {"name":"brand","type":"string","index":False},
 
             # Booleans
-            {"name": "is_visible", "type": "bool", "index": False},
+            {"name": "is_visible", "type": "bool", "index": False,"facet": True },
             {"name": "is_obsolete", "type": "bool", "index": False},
 
             # Translations (Objects)
@@ -64,10 +64,10 @@ def product_schema(collection_name: str):
             {"name": "stocks", "type": "object[]", "index": False},
 
             #Machine characteristics
-            {"name": "machine_characteristic", "type": "object[]", "index": False},
+            {"name": "machine_characteristic", "type": "object[]", "index": False,"reference":"characteristics_machine.id"},
 
             #Piece characteristics
-           {"name": "piece_characteristics","type": "object[]","index": False},
+           {"name": "piece_characteristics","type": "object[]","index": False,"reference":"characteristics_piece.id"},
 
             #Suppliers
             {"name": "suppliers", "type": "object[]", "index": False},
