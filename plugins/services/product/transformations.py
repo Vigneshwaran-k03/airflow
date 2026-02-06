@@ -319,7 +319,7 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             # alternatives
             pl.col("alternatives").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
 
-            # videos
+    # videos
             pl.col("videos").map_elements(_transform_videos, return_dtype=pl.Object),
 
             # refurbished
@@ -329,6 +329,19 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
 
             # best_brand
             pl.lit("", dtype=pl.Utf8).alias("best_brand"),
+
+            # aliases
+            pl.col("aliases").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
+            
+            # search_aliases
+            pl.col("aliases")
+            .map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object)
+            .map_elements(
+                lambda aliases: " ".join([a.get("alias", "") for a in aliases if isinstance(a, dict) and a.get("alias")]),
+                return_dtype=pl.Utf8
+            )
+            .fill_null(" ")
+            .alias("search_aliases"),
 
         ]
     )
@@ -383,7 +396,9 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "alternatives",
         "videos",
         "refurbished",
-        "best_brand"
+        "best_brand",
+        "aliases",
+        "search_aliases"
     ]
     
     lf = lf.select(final_cols)

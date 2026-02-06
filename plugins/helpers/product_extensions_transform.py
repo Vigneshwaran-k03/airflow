@@ -92,6 +92,17 @@ def _transform_extensions(value):
             if img_obj:
                 clean_data["img"] = img_obj
                 
+                
+        # Custom Fields
+        custom_fields = raw_data.get("custom_fields")
+        if custom_fields and isinstance(custom_fields, dict):
+            clean_data["custom_fields"] = custom_fields
+
+        # Images (List of IDs)
+        extension_images = raw_data.get("images")
+        if extension_images is not None and isinstance(extension_images, list):
+            clean_data["images"] = extension_images
+
         # Translations - KEEP AS OBJECTS but clean empty keys
         translation_fields = ["name", "meta_title", "meta_description", "short_description", "long_description", "specificities", "original_references"]
         

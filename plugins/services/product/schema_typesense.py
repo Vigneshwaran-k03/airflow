@@ -96,6 +96,10 @@ def product_schema(collection_name: str):
             # Best Brand
             {"name": "best_brand", "type": "string", "index": False,},
 
+            # Aliases
+            {"name": "aliases", "type": "object[]", "index": False},
+            {"name": "search_aliases", "type": "string", "index": False},
+
 
 
 

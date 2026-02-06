@@ -181,6 +181,21 @@ class LEnvironmentProduct(Base):
     average_rating = Column(Float, nullable=True)
     default_category_id = Column(String(45), nullable=True)
 
+class EnvironmentProductImage(Base):
+    __tablename__ = "l_environment_product_image"
+
+    environment_id = Column(Integer, primary_key=True, nullable=False)
+    product_id = Column(Integer, primary_key=True, nullable=False)
+    image_id = Column(Integer, primary_key=True, nullable=False)
+
+class EnvironmentProductField(Base):
+    __tablename__ = "l_environment_product_field"
+
+    environment_id = Column(Integer, primary_key=True, nullable=False)
+    product_id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(String(64), primary_key=True, nullable=False)
+    value = Column(String(255), nullable=False)
+
 #categories
 class Category(Base):
     __tablename__ = "catman_product"
@@ -410,4 +425,19 @@ class Videos(Base):
     environment_id = Column(Integer, nullable=False)
     order = Column(Integer, nullable=True)
 
-   
+#Alias
+class Alias(Base):
+    __tablename__ = "alias"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_produit = Column(Integer, nullable=True)
+    id_categorie = Column(Integer, nullable=True)
+    alias = Column(String(100), nullable=True)
+    name = Column(String(64), nullable=True)
+    ts = Column(Integer, nullable=True)
+
+class AliasCategories(Base):
+    __tablename__ = "alias_categories"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    nom = Column(String(50), nullable=True)
