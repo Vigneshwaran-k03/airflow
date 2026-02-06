@@ -24,7 +24,7 @@ def universal_schema(collection_name: str):
             {"name": "average_weight", "type": "float", "optional": True},
             {"name": "has_battery", "type": "bool"},
             {"name": "depreciation_rate", "type": "float"},
-            {"name": "is_visible_front", "type": "bool"},
+            {"name": "is_visible_front", "type": "bool","facet": True},
 
             {"name": "environment", "type": "string[]", "optional": True},
         ],
