@@ -13,8 +13,8 @@ def typesense_schema(collection_name: str):
             {"name": "parent_ids", "type": "int32[]"},
 
             # Branches
-            {"name": "technical_branches", "type": "int32[]"},
-            {"name": "universal_branches", "type": "int32[]"},
+            {"name": "technical_branches", "type": "int32[]","reference": "technical_branches.id"},
+            {"name": "universal_branches", "type": "int32[]","reference": "universal_branches.id"},
 
             #colour
             {"name": "primary_color", "type": "string"},
@@ -30,7 +30,7 @@ def typesense_schema(collection_name: str):
             {"name": "order", "type": "int32"},
 
             # Flags
-            {"name": "is_visible", "type": "bool"},
+            {"name": "is_visible", "type": "bool","facet": True},
             {"name": "is_enabled", "type": "bool"},
             {"name": "is_clickable", "type": "bool"},
             {"name": "has_pieces_displayed", "type": "int32"},

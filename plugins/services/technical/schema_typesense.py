@@ -17,7 +17,7 @@ def technical_schema(collection_name: str):
             {"name": "is_accessory", "type": "bool"},
             {"name": "is_other", "type": "bool"},
             {"name": "packaging", "type": "string", "optional": True},
-            {"name": "is_visible", "type": "bool"},
+            {"name": "is_visible", "type": "bool","facet": True},
 
             {"name": "hs_code", "type": "string", "optional": True},
             {"name": "score", "type": "int32"},
