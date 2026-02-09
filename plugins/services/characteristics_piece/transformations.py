@@ -31,11 +31,11 @@ def transform_characteristics_piece_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         pl.col("symbol").cast(pl.Utf8),
 
         # Integer fields
-        pl.col("technical_branch_id").cast(pl.Int32),
+        pl.col("technical_branch_id").cast(pl.Utf8),
 
         # Parse JSON products ids array
         pl.col("products_ids").map_elements(
-            lambda x: json.loads(x) if x else [],
-            return_dtype=pl.List(pl.Int64)
+            lambda x: [str(i) for i in json.loads(x)] if x else [],
+            return_dtype=pl.List(pl.Utf8)
         ),
     ])

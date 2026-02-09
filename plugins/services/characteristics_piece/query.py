@@ -2,6 +2,8 @@ from sqlalchemy import select, func, cast, String, case, literal_column
 from sqlalchemy.orm import aliased
 from models.characteristics_piece import Characteristic, characteristic_piece_value, Unit
 from models.translation import Translate
+from models.technicals import Technical
+from models.products import Product
 
 def characteristics_piece_base_query(limit: int = None, offset: int = None):
     # Aliases
@@ -11,6 +13,8 @@ def characteristics_piece_base_query(limit: int = None, offset: int = None):
     # Subquery for product_ids
     products_ids_subquery = (
         select(func.json_arrayagg(characteristic_piece_value.piece_id))
+        .select_from(characteristic_piece_value)
+        .join(Product, characteristic_piece_value.piece_id == Product.id)
         .where(characteristic_piece_value.characteristic_id == Characteristic.id)
         .correlate(Characteristic)
         .scalar_subquery()
@@ -37,6 +41,7 @@ def characteristics_piece_base_query(limit: int = None, offset: int = None):
             cast(func.json_object(*Translate.json_args(table=t_unit_name)), String).label("unit"),
         )
         .select_from(Characteristic)
+        .join(Technical, Characteristic.technical_branch_id == Technical.id)
         .outerjoin(t_name, Characteristic.name == t_name.id)
         .outerjoin(Unit, Characteristic.unit_id == Unit.id)
         .outerjoin(t_unit_name, Unit.name == t_unit_name.id)
