@@ -41,13 +41,13 @@ def product_schema(collection_name: str):
             {"name": "extensions", "type": "object", "index": False},
 
             #Categories
-            {"name": "categories", "type": "int32[]", "index": False},
+            {"name": "categories", "type": "int32[]", "index": False,"reference":"categories.id"},
 
             #Machines, pieces, parts
             {"name": "machines", "type": "int32[]", "index": False},
             {"name": "pieces", "type": "int32[]", "index": False},
             {"name": "parts", "type": "int32[]", "index": False},
-
+ 
             # Packaging
             {"name": "packaging", "type": "object", "index": False},
 
