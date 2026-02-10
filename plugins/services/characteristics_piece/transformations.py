@@ -28,7 +28,7 @@ def transform_characteristics_piece_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         
         # Other string fields
         pl.col("type").cast(pl.Utf8),
-        pl.col("symbol").cast(pl.Utf8),
+        pl.col("symbol").cast(pl.Utf8).fill_null(""),
 
         # Integer fields
         pl.col("technical_branch_id").cast(pl.Utf8),

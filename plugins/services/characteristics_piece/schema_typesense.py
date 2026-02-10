@@ -12,13 +12,13 @@ def characteristics_piece_schema(collection_name: str) -> dict:
             # Standard fields
             {"name": "technical_branch_id", "type": "string", "reference": "technical_branches.id"},
             {"name": "type", "type": "string"},
-            {"name": "symbol", "type": "string", "optional": True},
+            {"name": "symbol", "type": "string"},
             
             # Arrays (Lists)
-            {"name": "products_ids", "type": "string[]", "optional": True,"reference": "products.id"},
+            {"name": "products_ids", "type": "string[]","reference": "products.id"},
             
             # Translation objects
-            {"name": "name", "type": "object", "optional": True},
-            {"name": "unit", "type": "object", "optional": True},
+            {"name": "name", "type": "object"},
+            {"name": "unit", "type": "object"},
         ],
     }
