@@ -378,6 +378,14 @@ def product_base_query(limit: int = None, offset: int = None):
                 "id", CharacteristicMachine.id_caracteristique,
                 "context", "machine",
 
+                # TYPE
+                "type",
+                case(
+                    (UnitsTypes.is_boolean == True, "boolean"),
+                    ((UnitsTypes.is_text == True) | (UnitsTypes.is_enum == True), "enum"),
+                    else_="number"
+                ),
+
                 #VALUE
                 "value",
                 func.if_(
@@ -744,7 +752,7 @@ def product_base_query(limit: int = None, offset: int = None):
         cast(stocks_subquery, String).label("stocks"),
 
         #Machine characteristics
-        cast(machine_characteristics_subquery, String).label("machine_characteristic"),
+        cast(machine_characteristics_subquery, String).label("machine_characteristics"),
 
         #Piece characteristics
         cast(piece_characteristics_subquery, String).label("piece_characteristics"),
