@@ -296,7 +296,7 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
             pl.col("stocks").map_elements(lambda x: _parse_json(x) or [], return_dtype=pl.Object),
 
             #machine_characteristics
-            pl.col("machine_characteristic").map_elements(_clean_characteristics, return_dtype=pl.Object),
+            pl.col("machine_characteristics").map_elements(_clean_characteristics, return_dtype=pl.Object),
 
             #piece_characteristics
             pl.col("piece_characteristics").map_elements(_clean_characteristics, return_dtype=pl.Object),
@@ -386,7 +386,7 @@ def transform_product_data(lf: pl.LazyFrame) -> pl.LazyFrame:
         "environment",
         "pricing",
         "stocks",
-        "machine_characteristic",
+        "machine_characteristics",
         "piece_characteristics",
         "suppliers",
         "in_stock",
